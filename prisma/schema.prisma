@@ -22,13 +22,38 @@ model User {
   email         String    @unique
   emailVerified Boolean   @default(false)
   image         String?
+  role          Role      @default(PLAYER)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
   accounts      Account[]
   sessions      Session[]
+  teamId        String?
+  team          Team?     @relation(fields: [teamId], references: [id])
+  coachedTeams  Team[]    @relation("CoachToTeam")
 
   @@map("user")
+}
+
+enum Role {
+  ADMIN
+  COACH
+  PLAYER
+}
+
+model Team {
+  id          String       @id @default(cuid())
+  name        String
+  isValidated Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  coachId     String
+  coach       User         @relation("CoachToTeam", fields: [coachId], references: [id])
+  players     User[]
+  invitations Invitation[]
+
+  @@map("team")
 }
 
 model Session {
@@ -75,4 +100,28 @@ model Verification {
   updatedAt  DateTime @updatedAt
 
   @@map("verification")
+}
+
+model Invitation {
+  id        String           @id @default(cuid())
+  email     String
+  teamId    String
+  status    InvitationStatus @default(PENDING)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  expiresAt DateTime
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([email, teamId])
+  @@index([email])
+  @@index([teamId])
+  @@map("invitation")
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
 }
