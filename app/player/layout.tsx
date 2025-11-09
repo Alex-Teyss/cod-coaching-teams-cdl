@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import Link from "next/link";
+import { PlayerSidebar } from "@/components/sidebar/player-sidebar";
 
 export default async function PlayerLayout({
   children,
@@ -17,36 +17,11 @@ export default async function PlayerLayout({
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="border-b">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-8">
-              <h1 className="text-2xl font-bold">Joueur</h1>
-              <nav className="flex gap-4">
-                <Link
-                  href="/player/dashboard"
-                  className="text-sm font-medium hover:text-primary"
-                >
-                  Dashboard
-                </Link>
-                <Link
-                  href="/player/invitations"
-                  className="text-sm font-medium hover:text-primary"
-                >
-                  Invitations
-                </Link>
-              </nav>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-muted-foreground">
-                {session.user.name}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div className="container mx-auto px-4 py-8">{children}</div>
+    <div className="flex min-h-screen bg-background">
+      <PlayerSidebar userName={session.user.name} />
+      <main className="flex-1 overflow-auto">
+        <div className="container mx-auto px-8 py-8">{children}</div>
+      </main>
     </div>
   );
 }

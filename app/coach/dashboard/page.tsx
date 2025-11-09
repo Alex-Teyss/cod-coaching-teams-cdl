@@ -13,6 +13,22 @@ export default async function CoachDashboard() {
     redirect("/login");
   }
 
+  // Vérifier si l'utilisateur a complété l'onboarding (uniquement pour les coachs)
+  if (session.user.role === "COACH") {
+    const user = await prisma.user.findUnique({
+      where: {
+        id: session.user.id,
+      },
+      select: {
+        onboardingCompleted: true,
+      },
+    });
+
+    if (user && !user.onboardingCompleted) {
+      redirect("/coach/onboarding");
+    }
+  }
+
   // Récupérer les équipes du coach
   const teams = await prisma.team.findMany({
     where: {

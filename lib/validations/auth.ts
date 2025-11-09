@@ -33,6 +33,11 @@ export const signupSchema = z
     confirmPassword: z
       .string()
       .min(1, "La confirmation du mot de passe est requise"),
+    role: z
+      .enum(["COACH", "PLAYER"], {
+        required_error: "Le rôle est requis",
+      })
+      .default("PLAYER"),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Les mots de passe ne correspondent pas",

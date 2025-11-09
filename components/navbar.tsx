@@ -85,10 +85,8 @@ export function Navbar() {
               <NavigationMenuList>
                 {session && (
                   <NavigationMenuItem>
-                    <Link href={dashboardRoute} legacyBehavior passHref>
-                      <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                        Dashboard
-                      </NavigationMenuLink>
+                    <Link href={dashboardRoute} className={navigationMenuTriggerStyle()}>
+                      Dashboard
                     </Link>
                   </NavigationMenuItem>
                 )}

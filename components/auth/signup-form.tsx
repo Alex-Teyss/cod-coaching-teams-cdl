@@ -22,16 +22,21 @@ export function SignupForm() {
     handleSubmit,
     formState: { errors, touchedFields },
     watch,
+    setValue,
   } = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
     mode: "onChange",
     reValidateMode: "onChange",
+    defaultValues: {
+      role: "COACH",
+    },
   })
 
   const name = watch("name")
   const email = watch("email")
   const password = watch("password")
   const confirmPassword = watch("confirmPassword")
+  const role = watch("role")
 
   const onSubmit = async (data: SignupFormData) => {
     setError("")
@@ -42,6 +47,7 @@ export function SignupForm() {
         email: data.email,
         password: data.password,
         name: data.name,
+        role: data.role,
       })
 
       router.push("/")
@@ -63,6 +69,69 @@ export function SignupForm() {
       </CardHeader>
       <form onSubmit={handleSubmit(onSubmit)}>
         <CardContent className="space-y-4">
+          {/* Role Selection */}
+          <div className="space-y-2">
+            <Label>Je suis...</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <div
+                onClick={() => setValue("role", "COACH")}
+                className={`cursor-pointer rounded-lg border-2 p-4 transition-all duration-200 ${
+                  role === "COACH"
+                    ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20"
+                    : "border-border bg-card hover:bg-muted/50"
+                }`}
+              >
+                <div className="flex flex-col items-center gap-2">
+                  <div className={`rounded-full p-2 ${role === "COACH" ? "bg-blue-500/20" : "bg-muted"}`}>
+                    <svg className={`w-6 h-6 ${role === "COACH" ? "text-blue-600" : "text-muted-foreground"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </div>
+                  <div className="text-center">
+                    <p className={`font-semibold ${role === "COACH" ? "text-blue-600" : ""}`}>Coach</p>
+                    <p className="text-xs text-muted-foreground mt-1">Gérer des équipes</p>
+                  </div>
+                  {role === "COACH" && (
+                    <div className="absolute top-2 right-2">
+                      <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div
+                onClick={() => setValue("role", "PLAYER")}
+                className={`cursor-pointer rounded-lg border-2 p-4 transition-all duration-200 relative ${
+                  role === "PLAYER"
+                    ? "border-purple-500 bg-purple-50 dark:bg-purple-950/20"
+                    : "border-border bg-card hover:bg-muted/50"
+                }`}
+              >
+                <div className="flex flex-col items-center gap-2">
+                  <div className={`rounded-full p-2 ${role === "PLAYER" ? "bg-purple-500/20" : "bg-muted"}`}>
+                    <svg className={`w-6 h-6 ${role === "PLAYER" ? "text-purple-600" : "text-muted-foreground"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                  <div className="text-center">
+                    <p className={`font-semibold ${role === "PLAYER" ? "text-purple-600" : ""}`}>Joueur</p>
+                    <p className="text-xs text-muted-foreground mt-1">Rejoindre une équipe</p>
+                  </div>
+                  {role === "PLAYER" && (
+                    <div className="absolute top-2 right-2">
+                      <svg className="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            <input type="hidden" {...register("role")} />
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="name" className={errors.name && touchedFields.name ? "text-red-600" : ""}>
               Nom
