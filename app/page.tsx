@@ -62,14 +62,11 @@ export default function Home() {
                   />
 
                   <div className="text-3xl md:text-4xl font-bold flex justify-center items-center">
-                    <span>Niveau </span>
-                    <span className="inline-block min-w-[260px] md:min-w-[320px] text-center">
-                      <FlipWords
-                        words={["Professionnel", "Challenger", "Amateur"]}
-                        duration={3000}
-                        className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent"
-                      />
-                    </span>
+                    <FlipWords
+                      words={["Niveau Professionnel", "Niveau Challenger", "Niveau Amateur"]}
+                      duration={3000}
+                      className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent"
+                    />
                   </div>
                 </div>
 
