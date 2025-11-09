@@ -1,5 +1,7 @@
+"use client";
+
 import { Sidebar, SidebarItem } from "./sidebar";
-import { LayoutDashboard, Users, Shield, Settings } from "lucide-react";
+import { LayoutDashboard, Users, Shield, Settings, User } from "lucide-react";
 
 const adminItems: SidebarItem[] = [
   {
@@ -16,6 +18,11 @@ const adminItems: SidebarItem[] = [
     title: "Utilisateurs",
     href: "/admin/users",
     icon: Users,
+  },
+  {
+    title: "Profil",
+    href: "/admin/profile",
+    icon: User,
   },
   {
     title: "Paramètres",

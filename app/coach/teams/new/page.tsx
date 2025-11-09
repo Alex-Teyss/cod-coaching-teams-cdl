@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ImageUpload } from "@/components/image-upload";
 
 export default function NewTeamPage() {
   const [name, setName] = useState("");
+  const [image, setImage] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -18,7 +20,7 @@ export default function NewTeamPage() {
       const response = await fetch("/api/teams", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ name, image }),
       });
 
       const data = await response.json();
@@ -59,6 +61,15 @@ export default function NewTeamPage() {
 
       <div className="rounded-lg border bg-card p-6">
         <form onSubmit={handleSubmit} className="space-y-6">
+          <ImageUpload
+            value={image}
+            onChange={setImage}
+            onRemove={() => setImage("")}
+            endpoint="teamImage"
+            label="Logo de l'équipe"
+            disabled={loading}
+          />
+
           <div>
             <label htmlFor="name" className="block text-sm font-medium mb-2">
               Nom de l&apos;équipe <span className="text-destructive">*</span>

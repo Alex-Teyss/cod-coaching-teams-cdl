@@ -45,6 +45,7 @@ enum Role {
 model Team {
   id          String       @id @default(cuid())
   name        String
+  image       String?
   isValidated Boolean      @default(false)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt

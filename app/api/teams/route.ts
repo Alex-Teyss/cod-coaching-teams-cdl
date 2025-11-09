@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { name } = body;
+    const { name, image } = body;
 
     if (!name || name.trim().length === 0) {
       return NextResponse.json(
@@ -133,6 +133,7 @@ export async function POST(request: NextRequest) {
     const team = await prisma.team.create({
       data: {
         name: name.trim(),
+        image: image || null,
         coachId: session.user.id,
       },
       include: {
