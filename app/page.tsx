@@ -1,14 +1,22 @@
-"use client"
+"use client";
 
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/lib/auth-client";
 import Link from "next/link";
 import { Navbar } from "@/components/navbar";
-import { AppleHelloEnglishEffect } from "@/components/ui/shadcn-io/apple-hello-effect";
-import { ArrowRight, Users, Target, Award } from "lucide-react";
+import { ArrowRight, Target, Zap, Shield } from "lucide-react";
+import { getDashboardRoute } from "@/lib/role-redirect";
+import { useMemo } from "react";
+import { GradientText } from "@/components/ui/shadcn-io/gradient-text";
+import BlurText from "@/components/ui/shadcn-io/blur-text";
+import { FlipWords } from "@/components/ui/flip-words";
 
 export default function Home() {
   const { data: session, isPending } = useSession();
+
+  const dashboardRoute = useMemo(() => {
+    return getDashboardRoute(session?.user?.role);
+  }, [session?.user?.role]);
 
   if (isPending) {
     return (
@@ -19,135 +27,291 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-background dark:bg-gray-950">
       <Navbar />
 
-      {/* Hero Section */}
-      <section className="pt-32 pb-16 px-4 md:pt-40 md:pb-24">
-        <div className="container mx-auto max-w-6xl">
-          <div className="text-center space-y-8">
-            <div className="flex justify-center">
-              <AppleHelloEnglishEffect speed={1.1} />
-            </div>
+      <main id="main-content">
+        {/* Hero Section - BG-1 */}
+        <section
+          className="relative h-[100vh] flex items-center justify-center px-4 bg-background dark:bg-gray-950 overflow-hidden"
+          aria-labelledby="hero-title"
+        >
+          {/* Background decoration BG-1 */}
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-blue-500/5 to-transparent pointer-events-none" aria-hidden="true" />
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" aria-hidden="true" />
+          <div className="absolute top-1/2 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" aria-hidden="true" />
 
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
-              Coaching d&apos;équipes Call of Duty
-              <br />
-              <span className="text-primary">Pour la victoire</span>
-            </h1>
+          <div className="container mx-auto max-w-6xl relative z-10">
+            <div className="text-center space-y-10">
+              {/* Badge/Tag */}
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 dark:bg-blue-500/20 border border-blue-500/20 backdrop-blur-sm">
+                <Shield className="text-blue-500" size={16} />
+                <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                  Plateforme de coaching #1 en France
+                </span>
+              </div>
 
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-              Améliorez les performances de votre équipe avec des stratégies professionnelles,
-              des analyses détaillées et un coaching personnalisé.
-            </p>
+              {/* Main Content */}
+              <div className="space-y-6">
+                <div className="space-y-3">
+                  <BlurText
+                    text="COD Coaching"
+                    className="text-4xl md:text-5xl font-bold tracking-tight justify-center"
+                    delay={40}
+                    animateBy="words"
+                  />
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              {session ? (
-                <Link href="/dashboard">
-                  <Button size="lg" className="text-lg px-8">
-                    Accéder au Dashboard
-                    <ArrowRight className="ml-2" size={20} />
-                  </Button>
-                </Link>
-              ) : (
-                <>
-                  <Link href="/signup">
-                    <Button size="lg" className="text-lg px-8">
-                      Commencer gratuitement
+                  <div className="text-3xl md:text-4xl font-bold flex justify-center items-center">
+                    <span>Niveau </span>
+                    <span className="inline-block min-w-[260px] md:min-w-[320px] text-center">
+                      <FlipWords
+                        words={["Professionnel", "Challenger", "Amateur"]}
+                        duration={3000}
+                        className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent"
+                      />
+                    </span>
+                  </div>
+                </div>
+
+                <BlurText
+                  text="Transformez vos équipes en champions avec des stratégies professionnelles et un accompagnement personnalisé"
+                  className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed justify-center"
+                  delay={60}
+                  animateBy="words"
+                  direction="bottom"
+                />
+              </div>
+
+              {/* CTA Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-2">
+                {session ? (
+                  <Link href={dashboardRoute}>
+                    <Button size="lg" className="text-lg px-12 h-16 rounded-full shadow-2xl hover:shadow-blue-500/50 transition-all duration-300 hover:scale-105">
+                      Accéder au Dashboard
                       <ArrowRight className="ml-2" size={20} />
                     </Button>
                   </Link>
-                  <Link href="/login">
-                    <Button size="lg" variant="outline" className="text-lg px-8">
-                      Se connecter
-                    </Button>
-                  </Link>
-                </>
-              )}
-            </div>
+                ) : (
+                  <>
+                    <Link href="/signup">
+                      <Button size="lg" className="text-lg px-12 h-16 rounded-full shadow-2xl hover:shadow-blue-500/50 transition-all duration-300 hover:scale-105">
+                        Commencer gratuitement
+                        <ArrowRight className="ml-2" size={20} />
+                      </Button>
+                    </Link>
+                    <Link href="/login">
+                      <Button
+                        size="lg"
+                        variant="outline"
+                        className="text-lg px-12 h-16 rounded-full border-2 hover:bg-muted/50 transition-all duration-300 hover:scale-105"
+                      >
+                        Se connecter
+                      </Button>
+                    </Link>
+                  </>
+                )}
+              </div>
 
-            {session && (
-              <div className="pt-4">
+              {/* Social Proof */}
+              <div className="pt-6 space-y-3">
                 <p className="text-sm text-muted-foreground">
-                  Bienvenue, <span className="font-semibold text-foreground">{session.user.name}</span>
+                  Rejoignez plus de 100+ joueurs actifs
+                </p>
+                <div className="flex justify-center gap-8 flex-wrap">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <div className="flex -space-x-2">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 border-2 border-background" />
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 border-2 border-background" />
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-500 to-pink-600 border-2 border-background" />
+                    </div>
+                    <span>100+ joueurs</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Target className="text-blue-500" size={20} />
+                    <span>50+ équipes formées</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Zap className="text-purple-500" size={20} />
+                    <span>Support 24/7</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Features Section - BG-2 */}
+        <section
+          id="features"
+          className="py-12 md:py-16 bg-muted/30 dark:bg-gray-900/50 relative overflow-hidden"
+          aria-labelledby="features-title"
+        >
+          {/* Background decoration BG-2 */}
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-purple-500/5 to-transparent pointer-events-none" aria-hidden="true" />
+          <div className="absolute top-0 right-1/3 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" aria-hidden="true" />
+          <div className="absolute bottom-0 left-1/3 w-96 h-96 bg-pink-500/10 rounded-full blur-3xl pointer-events-none" aria-hidden="true" />
+          <div className="container mx-auto max-w-6xl px-4 relative z-10">
+            <div className="grid md:grid-cols-3 gap-8">
+              <article className="group relative p-8 rounded-2xl border border-border bg-card/50 dark:bg-gray-900/50 backdrop-blur transition-all duration-500 hover:bg-card dark:hover:bg-gray-800/80 hover:shadow-2xl hover:shadow-blue-500/10 dark:hover:shadow-blue-500/20 hover:-translate-y-2 hover:border-blue-500/50 cursor-pointer">
+                <div
+                  className="w-14 h-14 bg-blue-500/10 rounded-xl flex items-center justify-center mb-6 transition-all duration-500 group-hover:bg-blue-500/20 group-hover:scale-110 group-hover:rotate-3"
+                  aria-hidden="true"
+                >
+                  <Target className="text-blue-500 transition-all duration-500 group-hover:scale-110" size={28} strokeWidth={2} />
+                </div>
+                <h3 className="text-2xl font-semibold mb-3 transition-colors duration-300 group-hover:text-blue-500">
+                  Stratégies Avancées
+                </h3>
+                <p className="text-muted-foreground leading-relaxed transition-colors duration-300 group-hover:text-foreground">
+                  Tactiques professionnelles adaptées à votre niveau et style de jeu
+                </p>
+              </article>
+
+              <article className="group relative p-8 rounded-2xl border border-border bg-card/50 dark:bg-gray-900/50 backdrop-blur transition-all duration-500 hover:bg-card dark:hover:bg-gray-800/80 hover:shadow-2xl hover:shadow-purple-500/10 dark:hover:shadow-purple-500/20 hover:-translate-y-2 hover:border-purple-500/50 cursor-pointer">
+                <div
+                  className="w-14 h-14 bg-purple-500/10 rounded-xl flex items-center justify-center mb-6 transition-all duration-500 group-hover:bg-purple-500/20 group-hover:scale-110 group-hover:rotate-3"
+                  aria-hidden="true"
+                >
+                  <Zap className="text-purple-500 transition-all duration-500 group-hover:scale-110" size={28} strokeWidth={2} />
+                </div>
+                <h3 className="text-2xl font-semibold mb-3 transition-colors duration-300 group-hover:text-purple-500">
+                  Performances
+                </h3>
+                <p className="text-muted-foreground leading-relaxed transition-colors duration-300 group-hover:text-foreground">
+                  Analysez et améliorez vos statistiques en temps réel
+                </p>
+              </article>
+
+              <article className="group relative p-8 rounded-2xl border border-border bg-card/50 dark:bg-gray-900/50 backdrop-blur transition-all duration-500 hover:bg-card dark:hover:bg-gray-800/80 hover:shadow-2xl hover:shadow-pink-500/10 dark:hover:shadow-pink-500/20 hover:-translate-y-2 hover:border-pink-500/50 cursor-pointer">
+                <div
+                  className="w-14 h-14 bg-pink-500/10 rounded-xl flex items-center justify-center mb-6 transition-all duration-500 group-hover:bg-pink-500/20 group-hover:scale-110 group-hover:rotate-3"
+                  aria-hidden="true"
+                >
+                  <Shield className="text-pink-500 transition-all duration-500 group-hover:scale-110" size={28} strokeWidth={2} />
+                </div>
+                <h3 className="text-2xl font-semibold mb-3 transition-colors duration-300 group-hover:text-pink-500">
+                  Gestion d&apos;Équipe
+                </h3>
+                <p className="text-muted-foreground leading-relaxed transition-colors duration-300 group-hover:text-foreground">
+                  Organisez et suivez la progression de tous vos joueurs
+                </p>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        {/* CTA Section - BG-1 */}
+        <section
+          id="about"
+          className="py-24 md:py-32 bg-background dark:bg-gray-950 relative overflow-hidden"
+          aria-labelledby="cta-title"
+        >
+          {/* Background decoration BG-1 */}
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-blue-500/5 to-transparent pointer-events-none" aria-hidden="true" />
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" aria-hidden="true" />
+          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" aria-hidden="true" />
+
+          <div className="container mx-auto max-w-5xl px-4 relative z-10">
+            <div className="text-center space-y-12">
+              {/* Main CTA */}
+              <div className="space-y-6">
+                <h2 id="cta-title" className="text-4xl md:text-5xl font-bold tracking-tight text-black dark:text-white">
+                  Prêt à dominer la compétition ?
+                </h2>
+                <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+                  Rejoignez les équipes d&apos;élite qui transforment leur passion en victoires grâce à notre plateforme de coaching professionnelle
                 </p>
               </div>
-            )}
-          </div>
-        </div>
-      </section>
 
-      {/* Features Section */}
-      <section id="features" className="py-16 md:py-24 bg-muted/50">
-        <div className="container mx-auto max-w-6xl px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Pourquoi choisir notre plateforme ?
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Des outils professionnels pour transformer votre équipe en champions
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-card p-6 rounded-lg border border-border">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                <Users className="text-primary" size={24} />
+              {/* Stats */}
+              <div className="grid grid-cols-3 gap-8 max-w-3xl mx-auto py-8">
+                <div className="space-y-2">
+                  <div className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-500 to-blue-600 bg-clip-text text-transparent">
+                    100+
+                  </div>
+                  <div className="text-sm md:text-base text-muted-foreground">
+                    Joueurs actifs
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-500 to-purple-600 bg-clip-text text-transparent">
+                    50+
+                  </div>
+                  <div className="text-sm md:text-base text-muted-foreground">
+                    Équipes formées
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-pink-500 to-pink-600 bg-clip-text text-transparent">
+                    24/7
+                  </div>
+                  <div className="text-sm md:text-base text-muted-foreground">
+                    Support disponible
+                  </div>
+                </div>
               </div>
-              <h3 className="text-xl font-semibold mb-2">Gestion d&apos;équipe</h3>
-              <p className="text-muted-foreground">
-                Organisez vos équipes, gérez les rôles et suivez les performances de chaque membre.
-              </p>
-            </div>
 
-            <div className="bg-card p-6 rounded-lg border border-border">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                <Target className="text-primary" size={24} />
+              {/* CTA Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
+                {session ? (
+                  <Link href={dashboardRoute}>
+                    <Button size="lg" className="text-lg px-12 h-16 rounded-full shadow-2xl hover:shadow-blue-500/50 transition-all duration-300 hover:scale-105">
+                      Accéder au Dashboard
+                      <ArrowRight className="ml-2" size={20} />
+                    </Button>
+                  </Link>
+                ) : (
+                  <>
+                    <Link href="/signup">
+                      <Button size="lg" className="text-lg px-12 h-16 rounded-full shadow-2xl hover:shadow-blue-500/50 transition-all duration-300 hover:scale-105">
+                        Commencer gratuitement
+                        <ArrowRight className="ml-2" size={20} />
+                      </Button>
+                    </Link>
+                    <Link href="/login">
+                      <Button
+                        size="lg"
+                        variant="outline"
+                        className="text-lg px-12 h-16 rounded-full border-2 hover:bg-muted/50 transition-all duration-300 hover:scale-105"
+                      >
+                        Se connecter
+                      </Button>
+                    </Link>
+                  </>
+                )}
               </div>
-              <h3 className="text-xl font-semibold mb-2">Stratégies personnalisées</h3>
-              <p className="text-muted-foreground">
-                Accédez à des stratégies de jeu adaptées à votre style et à votre niveau.
-              </p>
-            </div>
 
-            <div className="bg-card p-6 rounded-lg border border-border">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                <Award className="text-primary" size={24} />
+              {/* Trust badges */}
+              <div className="pt-8">
+                <p className="text-sm text-muted-foreground mb-4">
+                  Plateforme de confiance
+                </p>
+                <div className="flex flex-wrap justify-center gap-6 items-center opacity-60">
+                  <div className="flex items-center gap-2">
+                    <Shield size={20} className="text-green-500" />
+                    <span className="text-sm">Sécurisé</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Target size={20} className="text-blue-500" />
+                    <span className="text-sm">Pro certifié</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Zap size={20} className="text-purple-500" />
+                    <span className="text-sm">Résultats rapides</span>
+                  </div>
+                </div>
               </div>
-              <h3 className="text-xl font-semibold mb-2">Analyses détaillées</h3>
-              <p className="text-muted-foreground">
-                Visualisez vos statistiques et identifiez les axes d&apos;amélioration.
-              </p>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section id="about" className="py-16 md:py-24">
-        <div className="container mx-auto max-w-4xl px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6">
-            Prêt à dominer la compétition ?
-          </h2>
-          <p className="text-lg text-muted-foreground mb-8">
-            Rejoignez des centaines d&apos;équipes qui utilisent déjà notre plateforme
-            pour améliorer leurs performances.
-          </p>
-          {!session && (
-            <Link href="/signup">
-              <Button size="lg" className="text-lg px-8">
-                Créer un compte gratuit
-                <ArrowRight className="ml-2" size={20} />
-              </Button>
-            </Link>
-          )}
-        </div>
-      </section>
+        </section>
+      </main>
 
       {/* Footer */}
-      <footer id="contact" className="border-t border-border py-8">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          <p>&copy; 2025 Cod Coaching Teams. Tous droits réservés.</p>
+      <footer id="contact" className="border-t border-border py-12 bg-muted/30 dark:bg-gray-900/50">
+        <div className="container mx-auto px-4 text-center">
+          <p className="text-sm text-muted-foreground">
+            &copy; 2025 COD Coaching Teams. Tous droits réservés.
+          </p>
         </div>
       </footer>
     </div>
