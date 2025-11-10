@@ -65,7 +65,7 @@ export function TeamCard({ team }: TeamCardProps) {
 
   return (
     <>
-      <div className="rounded-lg border bg-card">
+      <div className="rounded-lg border bg-card" data-testid="team-card">
         <div className="border-b p-6">
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-3 flex-1">
