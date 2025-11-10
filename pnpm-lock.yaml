@@ -71,6 +71,9 @@ importers:
       next:
         specifier: 16.0.0
         version: 16.0.0(@babel/core@7.28.5)(@playwright/test@1.56.1)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      prisma:
+        specifier: ^6.18.0
+        version: 6.18.0(typescript@5.9.3)
       react:
         specifier: 19.2.0
         version: 19.2.0
@@ -138,9 +141,6 @@ importers:
       jsdom:
         specifier: ^27.1.0
         version: 27.1.0
-      prisma:
-        specifier: ^6.18.0
-        version: 6.18.0(typescript@5.9.3)
       shadcn:
         specifier: ^3.5.0
         version: 3.5.0(@types/node@20.19.23)(typescript@5.9.3)
