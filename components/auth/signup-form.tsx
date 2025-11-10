@@ -73,8 +73,9 @@ export function SignupForm() {
     setIsLoading(true)
 
     try {
-      // Rediriger vers la page de sélection de rôle après l'inscription Google
-      await signUp.social({
+      // Pour Better Auth, l'inscription et la connexion OAuth utilisent le même endpoint
+      // Les nouveaux utilisateurs seront redirigés vers /onboarding/role par le middleware
+      await signIn.social({
         provider: "google",
         callbackURL: "/onboarding/role",
       })
