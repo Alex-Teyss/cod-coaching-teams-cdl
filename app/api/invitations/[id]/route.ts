@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { getNotificationLink } from "@/lib/notification-links";
 
 const MAX_TEAM_SIZE = 4;
 
@@ -92,6 +93,13 @@ export async function PATCH(
       });
 
       // Créer une notification pour le coach
+      const notificationMetadata = {
+        invitationId: updatedInvitation.id,
+        teamId: updatedInvitation.teamId,
+        teamName: updatedInvitation.team.name,
+        playerEmail: session.user.email,
+      };
+
       await prisma.notification.create({
         data: {
           userId: updatedInvitation.team.coachId,
@@ -99,10 +107,8 @@ export async function PATCH(
           title: "Invitation refusée",
           message: `${session.user.email} a refusé l'invitation à rejoindre l'équipe ${updatedInvitation.team.name}`,
           metadata: {
-            invitationId: updatedInvitation.id,
-            teamId: updatedInvitation.teamId,
-            teamName: updatedInvitation.team.name,
-            playerEmail: session.user.email,
+            ...notificationMetadata,
+            link: getNotificationLink({ type: "INVITATION_DECLINED", metadata: notificationMetadata }),
           },
         },
       });
@@ -184,6 +190,14 @@ export async function PATCH(
     });
 
     // Créer une notification pour le coach
+    const acceptedNotificationMetadata = {
+      invitationId: updatedInvitation.id,
+      teamId: updatedInvitation.teamId,
+      teamName: updatedInvitation.team.name,
+      playerId: user.id,
+      playerName: user.name,
+    };
+
     await prisma.notification.create({
       data: {
         userId: updatedInvitation.team.coachId,
@@ -191,11 +205,8 @@ export async function PATCH(
         title: "Invitation acceptée",
         message: `${session.user.name || session.user.email} a accepté l'invitation et a rejoint l'équipe ${updatedInvitation.team.name}`,
         metadata: {
-          invitationId: updatedInvitation.id,
-          teamId: updatedInvitation.teamId,
-          teamName: updatedInvitation.team.name,
-          playerId: user.id,
-          playerName: user.name,
+          ...acceptedNotificationMetadata,
+          link: getNotificationLink({ type: "INVITATION_ACCEPTED", metadata: acceptedNotificationMetadata }),
         },
       },
     });

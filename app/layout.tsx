@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import { AuthErrorToast } from "@/components/auth/auth-error-toast";
@@ -104,7 +105,9 @@ export default function RootLayout({
         <ThemeProvider>
           {children}
           <Toaster position="top-right" richColors />
-          <AuthErrorToast />
+          <Suspense fallback={null}>
+            <AuthErrorToast />
+          </Suspense>
         </ThemeProvider>
       </body>
     </html>

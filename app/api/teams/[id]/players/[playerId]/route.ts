@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { getNotificationLink } from "@/lib/notification-links";
 
 export async function DELETE(
   request: NextRequest,
@@ -91,6 +92,12 @@ export async function DELETE(
     }
 
     // Créer une notification pour le joueur retiré (asynchrone, non bloquant)
+    const playerRemovedMetadata = {
+      teamId: teamId,
+      teamName: team.name,
+      coachId: team.coachId,
+    };
+
     prisma.notification.create({
       data: {
         userId: playerId,
@@ -98,9 +105,8 @@ export async function DELETE(
         title: "Vous avez été retiré de l'équipe",
         message: `Vous avez été retiré de l'équipe ${team.name} par le coach`,
         metadata: {
-          teamId: teamId,
-          teamName: team.name,
-          coachId: team.coachId,
+          ...playerRemovedMetadata,
+          link: getNotificationLink({ type: "PLAYER_REMOVED", metadata: playerRemovedMetadata }),
         },
       },
     }).catch((error) => {

@@ -104,6 +104,19 @@ export function NotificationsPanel() {
     }
   }
 
+  const handleNotificationClick = async (notification: Notification) => {
+    // Marquer comme lu si pas déjà lu
+    if (!notification.read) {
+      await markAsRead(notification.id)
+    }
+
+    // Rediriger vers le lien dans metadata si disponible
+    if (notification.metadata?.link) {
+      router.push(notification.metadata.link as string)
+      setIsOpen(false)
+    }
+  }
+
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case "INVITATION_RECEIVED":
@@ -134,9 +147,11 @@ export function NotificationsPanel() {
       <SheetContent>
         <SheetHeader>
           <SheetTitle>Notifications</SheetTitle>
-          <SheetDescription>
-            Vous avez {unreadCount} notification{unreadCount > 1 ? "s" : ""} non lue{unreadCount > 1 ? "s" : ""}
-          </SheetDescription>
+          {unreadCount > 0 && (
+            <SheetDescription>
+              Vous avez {unreadCount} notification{unreadCount > 1 ? "s" : ""} non lue{unreadCount > 1 ? "s" : ""}
+            </SheetDescription>
+          )}
         </SheetHeader>
 
         <div className="mt-4 flex justify-between">
@@ -159,13 +174,14 @@ export function NotificationsPanel() {
               <p className="text-muted-foreground">Aucune notification</p>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-4 px-2">
               {notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`rounded-lg border p-4 ${
+                  className={`rounded-lg border p-4 cursor-pointer transition-colors hover:bg-accent/70 ${
                     !notification.read ? "bg-accent/50" : "bg-card"
                   }`}
+                  onClick={() => handleNotificationClick(notification)}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1">
@@ -193,7 +209,10 @@ export function NotificationsPanel() {
                           variant="ghost"
                           size="icon"
                           className="size-8"
-                          onClick={() => markAsRead(notification.id)}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            markAsRead(notification.id)
+                          }}
                         >
                           <Check className="size-4" />
                         </Button>
@@ -202,7 +221,10 @@ export function NotificationsPanel() {
                         variant="ghost"
                         size="icon"
                         className="size-8"
-                        onClick={() => deleteNotification(notification.id)}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          deleteNotification(notification.id)
+                        }}
                       >
                         <Trash2 className="size-4" />
                       </Button>

@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { signIn } from "@/lib/auth-client"
@@ -14,19 +14,37 @@ import { loginSchema, type LoginFormData } from "@/lib/validations/auth"
 
 export function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+
+  const emailParam = searchParams.get("email")
+  const messageParam = searchParams.get("message")
 
   const {
     register,
     handleSubmit,
     formState: { errors, touchedFields, isValid, dirtyFields },
     watch,
+    setValue,
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     mode: "onChange",
     reValidateMode: "onChange",
+    defaultValues: {
+      email: emailParam || "",
+    },
   })
+
+  useEffect(() => {
+    if (emailParam) {
+      setValue("email", emailParam)
+    }
+    if (messageParam) {
+      setSuccessMessage(messageParam)
+    }
+  }, [emailParam, messageParam, setValue])
 
   const email = watch("email")
   const password = watch("password")
@@ -170,6 +188,19 @@ export function LoginForm() {
               </p>
             )}
           </div>
+          <div className="flex justify-end">
+            <Link href="/forgot-password" className="text-sm text-primary hover:underline">
+              Mot de passe oublié ?
+            </Link>
+          </div>
+          {successMessage && (
+            <div className="text-sm text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/20 p-3 rounded-md flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-300">
+              <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              {successMessage}
+            </div>
+          )}
           {error && (
             <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-300">
               <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">

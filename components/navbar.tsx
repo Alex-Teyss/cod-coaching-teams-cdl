@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { getDashboardRoute, getRoleDisplayName } from "@/lib/role-redirect"
 import { ThemeToggleButton } from "@/components/ui/shadcn-io/theme-toggle-button"
-import { NotificationBadge } from "@/components/notification-badge"
+import { NotificationsPanel } from "@/components/notifications-panel"
 
 export function Navbar() {
   const { data: session } = useSession()
@@ -110,10 +110,9 @@ export function Navbar() {
               <NavigationMenuList className="gap-1">
                 {session && (
                   <NavigationMenuItem>
-                    <Link href={dashboardRoute} className={cn(navigationMenuTriggerStyle(), "!bg-transparent hover:!bg-accent relative")}>
+                    <Link href={dashboardRoute} className={cn(navigationMenuTriggerStyle(), "!bg-transparent hover:!bg-accent")}>
                       <LayoutDashboard className="size-4" />
                       <span>Dashboard</span>
-                      <NotificationBadge />
                     </Link>
                   </NavigationMenuItem>
                 )}
@@ -153,25 +152,28 @@ export function Navbar() {
           {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center gap-2">
             {session ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="gap-2">
-                    <User className="size-4 shrink-0" />
-                    <span>{session.user.name}</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel className="flex flex-col">
-                    <span className="font-medium">{session.user.name}</span>
-                    <span className="text-xs text-muted-foreground">{getRoleDisplayName(session.user.role)}</span>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className="gap-2 text-destructive focus:text-destructive">
-                    <LogOut className="size-4 shrink-0" />
-                    <span>Se déconnecter</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <>
+                <NotificationsPanel />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="gap-2">
+                      <User className="size-4 shrink-0" />
+                      <span>{session.user.name}</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel className="flex flex-col">
+                      <span className="font-medium">{session.user.name}</span>
+                      <span className="text-xs text-muted-foreground">{getRoleDisplayName(session.user.role)}</span>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout} className="gap-2 text-destructive focus:text-destructive">
+                      <LogOut className="size-4 shrink-0" />
+                      <span>Se déconnecter</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
             ) : (
               <>
                 <Link href="/login">
@@ -205,12 +207,11 @@ export function Navbar() {
                 {session && (
                   <Link
                     href={dashboardRoute}
-                    className="flex items-center gap-3 text-foreground/70 hover:text-foreground transition-all text-lg font-medium px-3 py-2 rounded-md hover:bg-accent relative"
+                    className="flex items-center gap-3 text-foreground/70 hover:text-foreground transition-all text-lg font-medium px-3 py-2 rounded-md hover:bg-accent"
                     onClick={() => setOpen(false)}
                   >
                     <LayoutDashboard className="size-5" />
                     Dashboard
-                    <NotificationBadge />
                   </Link>
                 )}
                 <a
@@ -239,6 +240,11 @@ export function Navbar() {
                 </Link>
 
                 <div className="mt-8 pt-6 border-t border-border">
+                  {session && (
+                    <div className="mb-6">
+                      <NotificationsPanel />
+                    </div>
+                  )}
                   <div className="mb-6">
                     <ThemeToggleButton className="w-full justify-start" />
                   </div>

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { sendInvitationEmail } from "@/lib/email";
+import { getNotificationLink } from "@/lib/notification-links";
 
 const MAX_TEAM_SIZE = 4;
 
@@ -205,7 +206,10 @@ export async function POST(request: NextRequest) {
       where: { email },
     });
 
-    const invitationUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/player/invitations`;
+    // URL pour les nouveaux utilisateurs : page d'inscription via invitation
+    // URL pour les utilisateurs existants : page des invitations
+    const invitationUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/invite/${invitation.id}`;
+    const existingUserUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/player/invitations`;
 
     // Toujours envoyer un email (non bloquant)
     sendInvitationEmail({
@@ -225,6 +229,12 @@ export async function POST(request: NextRequest) {
 
     // Si l'utilisateur existe, créer aussi une notification (non bloquant)
     if (invitedUser) {
+      const notificationMetadata = {
+        invitationId: invitation.id,
+        teamId: invitation.teamId,
+        teamName: invitation.team.name,
+      };
+
       prisma.notification.create({
         data: {
           userId: invitedUser.id,
@@ -232,9 +242,8 @@ export async function POST(request: NextRequest) {
           title: "Nouvelle invitation",
           message: `Vous avez été invité à rejoindre l'équipe ${invitation.team.name} par ${invitation.team.coach.name}`,
           metadata: {
-            invitationId: invitation.id,
-            teamId: invitation.teamId,
-            teamName: invitation.team.name,
+            ...notificationMetadata,
+            link: getNotificationLink({ type: "INVITATION_RECEIVED", metadata: notificationMetadata }),
           },
         },
       }).catch((error) => {

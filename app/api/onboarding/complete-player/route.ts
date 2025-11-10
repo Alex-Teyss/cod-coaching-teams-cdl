@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { headers } from "next/headers"
 import { NextResponse } from "next/server"
-import { hash } from "@node-rs/argon2"
+import { hashPassword } from "better-auth/crypto"
 
 export async function POST(request: Request) {
   try {
@@ -24,15 +24,11 @@ export async function POST(request: Request) {
       )
     }
 
-    // Hash the password using argon2
-    const hashedPassword = await hash(password, {
-      memoryCost: 19456,
-      timeCost: 2,
-      outputLen: 32,
-      parallelism: 1,
-    })
+    // Hash the password using Better Auth's hashPassword function
+    // Cela garantit la compatibilité avec le système d'authentification de Better Auth
+    const hashedPassword = await hashPassword(password)
 
-    // Update user with new name, password, and mark onboarding as completed
+    // Update user with new name and mark onboarding as completed
     const updatedUser = await prisma.user.update({
       where: {
         id: session.user.id,
@@ -43,23 +39,40 @@ export async function POST(request: Request) {
       },
     })
 
-    // Also update the password in the Account table
-    const account = await prisma.account.findFirst({
+    // Chercher ou créer un compte email pour cet utilisateur
+    let emailAccount = await prisma.account.findFirst({
       where: {
         userId: session.user.id,
+        providerId: "email",
       },
     })
 
-    if (account) {
+    if (emailAccount) {
+      // Mettre à jour le mot de passe du compte email existant
       await prisma.account.update({
         where: {
-          id: account.id,
+          id: emailAccount.id,
         },
         data: {
           password: hashedPassword,
         },
       })
+    } else {
+      // Créer un nouveau compte email si l'utilisateur n'en a pas (par exemple, s'il s'est inscrit avec Google)
+      emailAccount = await prisma.account.create({
+        data: {
+          accountId: session.user.email!,
+          providerId: "email",
+          userId: session.user.id,
+          password: hashedPassword,
+        },
+      })
     }
+
+    // Note: On ne supprime pas les sessions car l'utilisateur est déjà connecté
+    // Le mot de passe est maintenant disponible pour les futures connexions
+    // Si l'utilisateur était connecté via OAuth, il reste connecté
+    // S'il se déconnecte et se reconnecte plus tard, il pourra utiliser email/password
 
     return NextResponse.json({
       success: true,
@@ -77,3 +90,4 @@ export async function POST(request: Request) {
     )
   }
 }
+

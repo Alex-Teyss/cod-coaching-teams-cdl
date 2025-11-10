@@ -19,14 +19,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Rôle invalide" }, { status: 400 })
     }
 
-    // Mettre à jour le rôle de l'utilisateur et marquer l'onboarding comme complété
+    // Mettre à jour le rôle de l'utilisateur
+    // Pour les coachs, onboardingCompleted reste false jusqu'à ce qu'ils complètent /coach/onboarding
+    // Pour les joueurs, onboardingCompleted peut être true (ils n'ont pas besoin d'onboarding spécifique)
     await prisma.user.update({
       where: {
         id: session.user.id,
       },
       data: {
         role,
-        onboardingCompleted: true,
+        // Seuls les joueurs peuvent avoir onboardingCompleted: true après la sélection de rôle
+        // Les coachs doivent compléter /coach/onboarding
+        onboardingCompleted: role === "PLAYER",
       },
     })
 
