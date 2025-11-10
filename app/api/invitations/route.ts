@@ -205,11 +205,27 @@ export async function POST(request: NextRequest) {
       where: { email },
     });
 
-    let emailSent = false;
+    const invitationUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/player/invitations`;
 
+    // Toujours envoyer un email (non bloquant)
+    sendInvitationEmail({
+      to: email,
+      teamName: invitation.team.name,
+      coachName: invitation.team.coach.name,
+      invitationUrl,
+    }).then((emailResult) => {
+      if (emailResult.success) {
+        console.log(`Email d'invitation envoyé avec succès à ${email}`);
+      } else {
+        console.error(`Erreur lors de l'envoi de l'email à ${email}:`, emailResult.error);
+      }
+    }).catch((error) => {
+      console.error(`Exception lors de l'envoi de l'email à ${email}:`, error);
+    });
+
+    // Si l'utilisateur existe, créer aussi une notification (non bloquant)
     if (invitedUser) {
-      // L'utilisateur existe : créer une notification au lieu d'envoyer un email
-      await prisma.notification.create({
+      prisma.notification.create({
         data: {
           userId: invitedUser.id,
           type: "INVITATION_RECEIVED",
@@ -221,29 +237,14 @@ export async function POST(request: NextRequest) {
             teamName: invitation.team.name,
           },
         },
+      }).catch((error) => {
+        console.error("Erreur lors de la création de la notification:", error);
       });
-      console.log(`Notification créée pour l'utilisateur existant: ${email}`);
-    } else {
-      // L'utilisateur n'existe pas : envoyer un email d'invitation
-      const invitationUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/player/invitations`;
-
-      const emailResult = await sendInvitationEmail({
-        to: email,
-        teamName: invitation.team.name,
-        coachName: invitation.team.coach.name,
-        invitationUrl,
-      });
-
-      emailSent = emailResult.success;
-
-      if (!emailResult.success) {
-        console.warn("L'invitation a été créée mais l'email n'a pas pu être envoyé:", emailResult.error);
-      }
     }
 
     return NextResponse.json({
       ...invitation,
-      emailSent,
+      emailSent: true, // Email envoyé de manière asynchrone
       notificationSent: !!invitedUser,
     }, { status: 201 });
   } catch (error) {

@@ -27,12 +27,13 @@ export async function sendInvitationEmail({
   }
 
   const resend = new Resend(process.env.RESEND_API_KEY);
+  const fromEmail = process.env.EMAIL_FROM || "COD Coaching <onboarding@resend.dev>";
 
   try {
-    console.log(`Envoi d'email à ${to} pour l'équipe ${teamName}`);
+    console.log(`Envoi d'email à ${to} pour l'équipe ${teamName} depuis ${fromEmail}`);
 
-    const { data, error } = await resend.emails.send({
-      from: process.env.EMAIL_FROM || "COD Coaching <onboarding@resend.dev>",
+    const result = await resend.emails.send({
+      from: fromEmail,
       to: [to],
       subject: `Invitation à rejoindre l'équipe ${teamName}`,
       html: `
@@ -88,16 +89,49 @@ export async function sendInvitationEmail({
       `,
     });
 
-    if (error) {
-      console.error("Erreur Resend lors de l'envoi de l'email:", error);
-      return { success: false, error };
+    // Resend v6 can return { data, error } or throw exceptions
+    // Check for error property first
+    if (result && 'error' in result && result.error) {
+      const errorObj = result.error as any;
+      const errorMessage = errorObj?.message || JSON.stringify(errorObj);
+      console.error("Erreur Resend lors de l'envoi de l'email:", errorMessage);
+      console.error("Détails complets:", JSON.stringify({ to, from: fromEmail, teamName, error: errorObj }, null, 2));
+      return { 
+        success: false, 
+        error: errorMessage,
+      };
     }
 
-    console.log("Email envoyé avec succès:", data);
-    return { success: true, data };
+    // Success case - result should have data property with id
+    const emailId = (result as any)?.data?.id || (result as any)?.id;
+    if (emailId) {
+      console.log(`Email envoyé avec succès (ID: ${emailId}) à ${to}`);
+      return { success: true, data: result };
+    }
+
+    // If we get here, something unexpected happened
+    console.warn("Réponse Resend inattendue:", JSON.stringify(result, null, 2));
+    return { success: true, data: result };
   } catch (error) {
-    console.error("Exception lors de l'envoi de l'email:", error);
-    return { success: false, error };
+    // Resend throws exceptions for errors
+    const errorMessage = error instanceof Error 
+      ? error.message 
+      : typeof error === 'object' 
+        ? JSON.stringify(error, Object.getOwnPropertyNames(error), 2)
+        : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    
+    console.error("Exception Resend lors de l'envoi de l'email:");
+    console.error("Message:", errorMessage);
+    if (errorStack) {
+      console.error("Stack:", errorStack);
+    }
+    console.error("Détails:", JSON.stringify({ to, from: fromEmail, teamName, error }, Object.getOwnPropertyNames(error || {}), 2));
+    
+    return { 
+      success: false, 
+      error: errorMessage,
+    };
   }
 }
 
@@ -114,13 +148,15 @@ export async function sendContactEmail({
   }
 
   const resend = new Resend(process.env.RESEND_API_KEY);
+  const fromEmail = process.env.EMAIL_FROM || "COD Coaching <onboarding@resend.dev>";
+  const toEmail = process.env.SUPPORT_EMAIL || "contact@codcoachingteams.com";
 
   try {
-    console.log(`Envoi d'email de contact de ${name} (${email})`);
+    console.log(`Envoi d'email de contact de ${name} (${email}) à ${toEmail}`);
 
-    const { data, error } = await resend.emails.send({
-      from: process.env.EMAIL_FROM || "COD Coaching <onboarding@resend.dev>",
-      to: [process.env.SUPPORT_EMAIL || "contact@codcoachingteams.com"],
+    const result = await resend.emails.send({
+      from: fromEmail,
+      to: [toEmail],
       replyTo: email,
       subject: `[Contact] ${subject}`,
       html: `
@@ -178,15 +214,44 @@ export async function sendContactEmail({
       `,
     });
 
-    if (error) {
-      console.error("Erreur Resend lors de l'envoi de l'email de contact:", error);
-      return { success: false, error };
+    // Resend v6 can return { data, error } or throw exceptions
+    if (result && 'error' in result && result.error) {
+      const errorObj = result.error as any;
+      const errorMessage = errorObj?.message || JSON.stringify(errorObj);
+      console.error("Erreur Resend lors de l'envoi de l'email de contact:", errorMessage);
+      console.error("Détails complets:", JSON.stringify({ from: email, to: toEmail, subject, error: errorObj }, null, 2));
+      return { 
+        success: false, 
+        error: errorMessage,
+      };
     }
 
-    console.log("Email de contact envoyé avec succès:", data);
-    return { success: true, data };
+    const emailId = (result as any)?.data?.id || (result as any)?.id;
+    if (emailId) {
+      console.log(`Email de contact envoyé avec succès (ID: ${emailId})`);
+      return { success: true, data: result };
+    }
+
+    console.warn("Réponse Resend inattendue:", JSON.stringify(result, null, 2));
+    return { success: true, data: result };
   } catch (error) {
-    console.error("Exception lors de l'envoi de l'email de contact:", error);
-    return { success: false, error };
+    const errorMessage = error instanceof Error 
+      ? error.message 
+      : typeof error === 'object' 
+        ? JSON.stringify(error, Object.getOwnPropertyNames(error), 2)
+        : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    
+    console.error("Exception Resend lors de l'envoi de l'email de contact:");
+    console.error("Message:", errorMessage);
+    if (errorStack) {
+      console.error("Stack:", errorStack);
+    }
+    console.error("Détails:", JSON.stringify({ from: email, to: toEmail, subject, error }, Object.getOwnPropertyNames(error || {}), 2));
+    
+    return { 
+      success: false, 
+      error: errorMessage,
+    };
   }
 }

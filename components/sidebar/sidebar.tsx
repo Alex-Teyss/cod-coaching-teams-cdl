@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { LucideIcon, LogOut } from "lucide-react";
@@ -21,9 +22,11 @@ interface SidebarProps {
 
 export function Sidebar({ items, userName, userRole }: SidebarProps) {
   const pathname = usePathname();
-
+  const router = useRouter();
+  
   const handleLogout = async () => {
     await signOut();
+    router.push("/");
   };
 
   return (

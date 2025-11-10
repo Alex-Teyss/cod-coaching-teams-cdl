@@ -76,6 +76,37 @@ export async function DELETE(
       data: { teamId: null },
     });
 
+    // Si l'équipe était validée et a 4 joueurs, la rendre non validée
+    if (team.isValidated) {
+      const playerCount = await prisma.user.count({
+        where: { teamId: teamId },
+      });
+
+      if (playerCount < 4) {
+        await prisma.team.update({
+          where: { id: teamId },
+          data: { isValidated: false },
+        });
+      }
+    }
+
+    // Créer une notification pour le joueur retiré (asynchrone, non bloquant)
+    prisma.notification.create({
+      data: {
+        userId: playerId,
+        type: "PLAYER_REMOVED",
+        title: "Vous avez été retiré de l'équipe",
+        message: `Vous avez été retiré de l'équipe ${team.name} par le coach`,
+        metadata: {
+          teamId: teamId,
+          teamName: team.name,
+          coachId: team.coachId,
+        },
+      },
+    }).catch((error) => {
+      console.error("Erreur lors de la création de la notification:", error);
+    });
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Erreur lors du retrait du joueur:", error);
