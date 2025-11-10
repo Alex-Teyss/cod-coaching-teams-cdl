@@ -9,11 +9,6 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
 
-  // Ignore ESLint errors during build
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-
   // Optimize images
   images: {
     formats: ['image/avif', 'image/webp'],
