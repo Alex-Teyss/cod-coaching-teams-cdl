@@ -26,6 +26,7 @@ export default async function CoachTeamsPage() {
           id: true,
           name: true,
           email: true,
+          image: true,
         },
         orderBy: {
           name: "asc",
@@ -86,65 +87,7 @@ export default async function CoachTeamsPage() {
       ) : (
         <div className="grid gap-6 md:grid-cols-2">
           {teams.map((team) => (
-            <div key={team.id} className="rounded-lg border bg-card">
-              <div className="border-b p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <h3 className="text-xl font-semibold">{team.name}</h3>
-                    {team.isValidated && (
-                      <span className="rounded-full bg-green-500/10 px-3 py-1 text-xs font-medium text-green-700 dark:text-green-400">
-                        ✓ Validée
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                  <div>
-                    <span className="font-medium text-foreground">
-                      {team._count.players}
-                    </span>{" "}
-                    / 4 joueurs
-                  </div>
-                  {team.invitations.length > 0 && (
-                    <div>
-                      <span className="font-medium text-foreground">
-                        {team.invitations.length}
-                      </span>{" "}
-                      invitation{team.invitations.length > 1 ? "s" : ""} en
-                      attente
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="p-6">
-                {team.players.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    Aucun joueur dans cette équipe
-                  </p>
-                ) : (
-                  <div className="space-y-3">
-                    {team.players.map((player) => (
-                      <div
-                        key={player.id}
-                        className="flex items-center gap-3 rounded-lg border p-3"
-                      >
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                          <span className="text-sm font-semibold text-primary">
-                            {player.name.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">{player.name}</p>
-                          <p className="text-sm text-muted-foreground truncate">
-                            {player.email}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
+            <TeamCard key={team.id} team={team} />
           ))}
         </div>
       )}
