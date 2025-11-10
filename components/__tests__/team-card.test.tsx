@@ -173,16 +173,19 @@ describe("TeamCard", () => {
     });
   });
 
-  it("should show message when team has no players", () => {
+  it("should show invitation slots when team has no players", () => {
     const emptyTeam = {
       ...mockTeam,
       players: [],
       _count: { players: 0 },
     };
     render(<TeamCard team={emptyTeam} />);
-    expect(
-      screen.getByText("Aucun joueur dans cette équipe")
-    ).toBeInTheDocument();
+    // Should show 4 empty invitation slots
+    const inviteButtons = screen.getAllByText("Inviter");
+    expect(inviteButtons).toHaveLength(4);
+    // Should show email input placeholders
+    const emailInputs = screen.getAllByPlaceholderText("email@joueur.com");
+    expect(emailInputs).toHaveLength(4);
   });
 
   it("should warn about removing players when deleting team with players", () => {
@@ -194,5 +197,64 @@ describe("TeamCard", () => {
     expect(
       screen.getByText(/Les 2 joueurs de cette équipe seront retirés/)
     ).toBeInTheDocument();
+  });
+
+  it("should show remove player button for each player", () => {
+    render(<TeamCard team={mockTeam} />);
+    const removeButtons = screen.getAllByTitle("Retirer le joueur");
+    expect(removeButtons).toHaveLength(2);
+  });
+
+  it("should show invitation slots for remaining empty spots", () => {
+    render(<TeamCard team={mockTeam} />);
+    // Team has 2 players, so should show 2 invitation slots (4 total - 2 players)
+    const inviteButtons = screen.getAllByText("Inviter");
+    expect(inviteButtons).toHaveLength(2);
+  });
+
+  it("should not show invitation slots when team is validated", () => {
+    const validatedTeam = {
+      ...mockTeam,
+      isValidated: true,
+      players: [mockTeam.players[0]], // 1 player
+    };
+    render(<TeamCard team={validatedTeam} />);
+    // Should not show invitation slots for validated teams
+    expect(screen.queryByText("Inviter")).not.toBeInTheDocument();
+    // Should show validated message
+    expect(
+      screen.getByText(/Équipe validée avec 1 joueur/)
+    ).toBeInTheDocument();
+  });
+
+  it("should handle player invitation", async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ success: true }),
+    } as Response);
+
+    render(<TeamCard team={mockTeam} />);
+
+    // Find the first invitation slot input
+    const emailInputs = screen.getAllByPlaceholderText("email@joueur.com");
+    const firstInput = emailInputs[0];
+
+    // Type email
+    fireEvent.change(firstInput, { target: { value: "newplayer@test.com" } });
+
+    // Click invite button
+    const inviteButtons = screen.getAllByText("Inviter");
+    fireEvent.click(inviteButtons[0]);
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith("/api/invitations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: "newplayer@test.com",
+          teamId: "team-1",
+        }),
+      });
+    });
   });
 });
