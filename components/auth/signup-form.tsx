@@ -43,18 +43,26 @@ export function SignupForm() {
     setIsLoading(true)
 
     try {
-      await signUp.email({
+      const result = await signUp.email({
         email: data.email,
         password: data.password,
         name: data.name,
         role: data.role,
+        callbackURL: "/",
       })
 
-      router.push("/")
-    } catch (err) {
-      setError("Une erreur est survenue lors de l'inscription")
+      // Vérifier si l'inscription a échoué
+      if (result?.error) {
+        setError(result.error.message || "Une erreur est survenue lors de l'inscription")
+        setIsLoading(false)
+        return
+      }
+
+      // L'inscription a réussi, Better Auth va gérer la redirection
+      // On ne fait pas router.push ici car Better Auth le fait automatiquement
+    } catch (err: any) {
+      setError(err?.message || "Une erreur est survenue lors de l'inscription")
       console.error(err)
-    } finally {
       setIsLoading(false)
     }
   }

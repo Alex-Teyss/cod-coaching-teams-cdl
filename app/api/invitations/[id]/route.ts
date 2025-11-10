@@ -81,6 +81,30 @@ export async function PATCH(
       const updatedInvitation = await prisma.invitation.update({
         where: { id },
         data: { status: "DECLINED" },
+        include: {
+          team: {
+            select: {
+              name: true,
+              coachId: true,
+            },
+          },
+        },
+      });
+
+      // Créer une notification pour le coach
+      await prisma.notification.create({
+        data: {
+          userId: updatedInvitation.team.coachId,
+          type: "INVITATION_DECLINED",
+          title: "Invitation refusée",
+          message: `${session.user.email} a refusé l'invitation à rejoindre l'équipe ${updatedInvitation.team.name}`,
+          metadata: {
+            invitationId: updatedInvitation.id,
+            teamId: updatedInvitation.teamId,
+            teamName: updatedInvitation.team.name,
+            playerEmail: session.user.email,
+          },
+        },
       });
 
       return NextResponse.json(updatedInvitation);
@@ -142,7 +166,25 @@ export async function PATCH(
         team: {
           select: {
             name: true,
+            coachId: true,
           },
+        },
+      },
+    });
+
+    // Créer une notification pour le coach
+    await prisma.notification.create({
+      data: {
+        userId: updatedInvitation.team.coachId,
+        type: "INVITATION_ACCEPTED",
+        title: "Invitation acceptée",
+        message: `${session.user.name || session.user.email} a accepté l'invitation et a rejoint l'équipe ${updatedInvitation.team.name}`,
+        metadata: {
+          invitationId: updatedInvitation.id,
+          teamId: updatedInvitation.teamId,
+          teamName: updatedInvitation.team.name,
+          playerId: user.id,
+          playerName: user.name,
         },
       },
     });

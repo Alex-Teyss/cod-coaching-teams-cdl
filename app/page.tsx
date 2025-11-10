@@ -149,7 +149,7 @@ export default function Home() {
           <div className="absolute bottom-0 left-1/3 w-96 h-96 bg-pink-500/10 rounded-full blur-3xl pointer-events-none" aria-hidden="true" />
           <div className="container mx-auto max-w-6xl px-4 relative z-10">
             <div className="grid md:grid-cols-3 gap-8">
-              <article className="group relative p-8 rounded-2xl border border-border bg-card/50 dark:bg-gray-900/50 backdrop-blur transition-all duration-500 hover:bg-card dark:hover:bg-gray-800/80 hover:shadow-2xl hover:shadow-blue-500/10 dark:hover:shadow-blue-500/20 hover:-translate-y-2 hover:border-blue-500/50 cursor-pointer">
+              <article className="group relative p-8 rounded-2xl border border-border bg-card/50 dark:bg-gray-900/50 backdrop-blur transition-all duration-500 hover:bg-card dark:hover:bg-gray-800/80 hover:shadow-2xl hover:shadow-blue-500/10 dark:hover:shadow-blue-500/20 hover:-translate-y-2 hover:border-blue-500/50">
                 <div
                   className="w-14 h-14 bg-blue-500/10 rounded-xl flex items-center justify-center mb-6 transition-all duration-500 group-hover:bg-blue-500/20 group-hover:scale-110 group-hover:rotate-3"
                   aria-hidden="true"
@@ -164,7 +164,7 @@ export default function Home() {
                 </p>
               </article>
 
-              <article className="group relative p-8 rounded-2xl border border-border bg-card/50 dark:bg-gray-900/50 backdrop-blur transition-all duration-500 hover:bg-card dark:hover:bg-gray-800/80 hover:shadow-2xl hover:shadow-purple-500/10 dark:hover:shadow-purple-500/20 hover:-translate-y-2 hover:border-purple-500/50 cursor-pointer">
+              <article className="group relative p-8 rounded-2xl border border-border bg-card/50 dark:bg-gray-900/50 backdrop-blur transition-all duration-500 hover:bg-card dark:hover:bg-gray-800/80 hover:shadow-2xl hover:shadow-purple-500/10 dark:hover:shadow-purple-500/20 hover:-translate-y-2 hover:border-purple-500/50">
                 <div
                   className="w-14 h-14 bg-purple-500/10 rounded-xl flex items-center justify-center mb-6 transition-all duration-500 group-hover:bg-purple-500/20 group-hover:scale-110 group-hover:rotate-3"
                   aria-hidden="true"
@@ -179,7 +179,7 @@ export default function Home() {
                 </p>
               </article>
 
-              <article className="group relative p-8 rounded-2xl border border-border bg-card/50 dark:bg-gray-900/50 backdrop-blur transition-all duration-500 hover:bg-card dark:hover:bg-gray-800/80 hover:shadow-2xl hover:shadow-pink-500/10 dark:hover:shadow-pink-500/20 hover:-translate-y-2 hover:border-pink-500/50 cursor-pointer">
+              <article className="group relative p-8 rounded-2xl border border-border bg-card/50 dark:bg-gray-900/50 backdrop-blur transition-all duration-500 hover:bg-card dark:hover:bg-gray-800/80 hover:shadow-2xl hover:shadow-pink-500/10 dark:hover:shadow-pink-500/20 hover:-translate-y-2 hover:border-pink-500/50">
                 <div
                   className="w-14 h-14 bg-pink-500/10 rounded-xl flex items-center justify-center mb-6 transition-all duration-500 group-hover:bg-pink-500/20 group-hover:scale-110 group-hover:rotate-3"
                   aria-hidden="true"

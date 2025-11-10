@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { LucideIcon } from "lucide-react";
+import { LucideIcon, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { signOut } from "@/lib/auth-client";
 
 export interface SidebarItem {
   title: string;
@@ -19,6 +21,10 @@ interface SidebarProps {
 
 export function Sidebar({ items, userName, userRole }: SidebarProps) {
   const pathname = usePathname();
+
+  const handleLogout = async () => {
+    await signOut();
+  };
 
   return (
     <div className="flex h-screen w-64 flex-col border-r bg-card">
@@ -59,7 +65,15 @@ export function Sidebar({ items, userName, userRole }: SidebarProps) {
         })}
       </nav>
 
-      <div className="border-t p-4">
+      <div className="border-t p-4 space-y-2">
+        <Button
+          variant="outline"
+          className="w-full gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+          onClick={handleLogout}
+        >
+          <LogOut className="h-4 w-4" />
+          Se déconnecter
+        </Button>
         <Link
           href="/"
           className="flex w-full items-center justify-center rounded-lg border bg-background px-3 py-2 text-sm font-medium hover:bg-accent"

@@ -4,7 +4,8 @@ import * as React from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { useSession, signOut } from "@/lib/auth-client"
-import { Menu } from "lucide-react"
+import { Menu, LayoutDashboard, Info, Zap, MessageCircle, LogOut, User } from "lucide-react"
+import { cn } from "@/lib/utils"
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -29,15 +30,26 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { getDashboardRoute, getRoleDisplayName } from "@/lib/role-redirect"
 import { ThemeToggleButton } from "@/components/ui/shadcn-io/theme-toggle-button"
+import { NotificationBadge } from "@/components/notification-badge"
 
 export function Navbar() {
   const { data: session } = useSession()
   const [open, setOpen] = React.useState(false)
+  const [scrolled, setScrolled] = React.useState(false)
 
   // Get the appropriate dashboard route based on user role
   const dashboardRoute = React.useMemo(() => {
     return getDashboardRoute(session?.user?.role)
   }, [session?.user?.role])
+
+  // Handle scroll event for navbar animation
+  React.useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20)
+    }
+    window.addEventListener("scroll", handleScroll)
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [])
 
   const handleLogout = async () => {
     await signOut()
@@ -69,53 +81,71 @@ export function Navbar() {
         Aller au contenu principal
       </a>
 
-      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 max-w-screen-2xl items-center px-4">
+      <header className={cn(
+        "sticky top-0 z-50 w-full transition-all duration-300",
+        scrolled
+          ? "border-b border-border/60 bg-background/80 backdrop-blur-xl shadow-lg shadow-black/5 dark:shadow-black/20"
+          : "border-b border-border/40 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/60"
+      )}>
+        <div className={cn(
+          "container flex max-w-screen-2xl items-center px-4 transition-all duration-300",
+          scrolled ? "h-14" : "h-16"
+        )}>
         {/* Logo */}
         <div className="mr-4 flex">
-          <Link href="/" className="mr-6 flex items-center space-x-2" aria-label="Retour à l'accueil">
-            <span className="font-bold text-xl">Cod Coaching Teams</span>
+          <Link href="/" className="mr-6 flex items-center space-x-2 transition-all hover:scale-105" aria-label="Retour à l'accueil">
+            <span className={cn(
+              "font-bold transition-all duration-300",
+              scrolled ? "text-lg" : "text-xl"
+            )}>
+              Cod Coaching Teams
+            </span>
           </Link>
         </div>
 
         {/* Desktop Navigation */}
-        <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
+        <div className="flex flex-1 items-center justify-end gap-4">
           <nav className="hidden md:flex items-center" aria-label="Navigation principale">
             <NavigationMenu>
-              <NavigationMenuList>
+              <NavigationMenuList className="gap-1">
                 {session && (
                   <NavigationMenuItem>
-                    <Link href={dashboardRoute} className={navigationMenuTriggerStyle()}>
-                      Dashboard
+                    <Link href={dashboardRoute} className={cn(navigationMenuTriggerStyle(), "!bg-transparent hover:!bg-accent relative")}>
+                      <LayoutDashboard className="size-4" />
+                      <span>Dashboard</span>
+                      <NotificationBadge />
                     </Link>
                   </NavigationMenuItem>
                 )}
                 <NavigationMenuItem>
-                  <NavigationMenuLink
+                  <Link
                     href="#about"
-                    className={navigationMenuTriggerStyle()}
+                    className={cn(navigationMenuTriggerStyle(), "!bg-transparent hover:!bg-accent")}
                     onClick={(e) => scrollToSection(e, "#about")}
                   >
-                    About
-                  </NavigationMenuLink>
+                    <Info className="size-4" />
+                    <span>About</span>
+                  </Link>
                 </NavigationMenuItem>
                 <NavigationMenuItem>
-                  <NavigationMenuLink
+                  <Link
                     href="#features"
-                    className={navigationMenuTriggerStyle()}
+                    className={cn(navigationMenuTriggerStyle(), "!bg-transparent hover:!bg-accent")}
                     onClick={(e) => scrollToSection(e, "#features")}
                   >
-                    Features
-                  </NavigationMenuLink>
+                    <Zap className="size-4" />
+                    <span>Features</span>
+                  </Link>
                 </NavigationMenuItem>
                 <NavigationMenuItem>
-                  <NavigationMenuLink
+                  <Link
                     href="#contact"
-                    className={navigationMenuTriggerStyle()}
+                    className={cn(navigationMenuTriggerStyle(), "!bg-transparent hover:!bg-accent")}
                     onClick={(e) => scrollToSection(e, "#contact")}
                   >
-                    Contact
-                  </NavigationMenuLink>
+                    <MessageCircle className="size-4" />
+                    <span>Contact</span>
+                  </Link>
                 </NavigationMenuItem>
               </NavigationMenuList>
             </NavigationMenu>
@@ -126,17 +156,20 @@ export function Navbar() {
             {session ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm">
-                    {session.user.name}
+                  <Button variant="ghost" size="sm" className="gap-2">
+                    <User className="size-4 shrink-0" />
+                    <span>{session.user.name}</span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>
-                    {getRoleDisplayName(session.user.role)}
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel className="flex flex-col">
+                    <span className="font-medium">{session.user.name}</span>
+                    <span className="text-xs text-muted-foreground">{getRoleDisplayName(session.user.role)}</span>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout}>
-                    Se déconnecter
+                  <DropdownMenuItem onClick={handleLogout} className="gap-2 text-destructive focus:text-destructive">
+                    <LogOut className="size-4 shrink-0" />
+                    <span>Se déconnecter</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -148,7 +181,9 @@ export function Navbar() {
                   </Button>
                 </Link>
                 <Link href="/signup">
-                  <Button size="sm">S&apos;inscrire</Button>
+                  <Button variant="ghost" size="sm" className="!bg-transparent hover:!bg-accent">
+                    S&apos;inscrire
+                  </Button>
                 </Link>
               </>
             )}
@@ -167,35 +202,40 @@ export function Navbar() {
               <SheetHeader>
                 <SheetTitle>Menu</SheetTitle>
               </SheetHeader>
-              <div className="flex flex-col gap-4 mt-8">
+              <div className="flex flex-col gap-2 mt-8">
                 {session && (
                   <Link
                     href={dashboardRoute}
-                    className="text-foreground/70 hover:text-foreground transition-colors text-lg font-medium"
+                    className="flex items-center gap-3 text-foreground/70 hover:text-foreground transition-all text-lg font-medium px-3 py-2 rounded-md hover:bg-accent relative"
                     onClick={() => setOpen(false)}
                   >
+                    <LayoutDashboard className="size-5" />
                     Dashboard
+                    <NotificationBadge />
                   </Link>
                 )}
                 <a
                   href="#about"
-                  className="text-foreground/70 hover:text-foreground transition-colors text-lg font-medium"
+                  className="flex items-center gap-3 text-foreground/70 hover:text-foreground transition-all text-lg font-medium px-3 py-2 rounded-md hover:bg-accent"
                   onClick={(e) => scrollToSection(e, "#about")}
                 >
+                  <Info className="size-5" />
                   About
                 </a>
                 <a
                   href="#features"
-                  className="text-foreground/70 hover:text-foreground transition-colors text-lg font-medium"
+                  className="flex items-center gap-3 text-foreground/70 hover:text-foreground transition-all text-lg font-medium px-3 py-2 rounded-md hover:bg-accent"
                   onClick={(e) => scrollToSection(e, "#features")}
                 >
+                  <Zap className="size-5" />
                   Features
                 </a>
                 <a
                   href="#contact"
-                  className="text-foreground/70 hover:text-foreground transition-colors text-lg font-medium"
+                  className="flex items-center gap-3 text-foreground/70 hover:text-foreground transition-all text-lg font-medium px-3 py-2 rounded-md hover:bg-accent"
                   onClick={(e) => scrollToSection(e, "#contact")}
                 >
+                  <MessageCircle className="size-5" />
                   Contact
                 </a>
 
@@ -205,37 +245,41 @@ export function Navbar() {
                   </div>
                   {session ? (
                     <div className="space-y-4">
-                      <div>
+                      <div className="px-3 py-2 rounded-lg bg-accent/50">
                         <p className="text-xs text-muted-foreground mb-1">
                           Connecté en tant que
                         </p>
-                        <p className="font-medium text-foreground">
+                        <p className="font-medium text-foreground flex items-center gap-2">
+                          <User className="size-4" />
                           {session.user.name}
                         </p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm text-muted-foreground ml-6">
                           {getRoleDisplayName(session.user.role)}
                         </p>
                       </div>
                       <Button
                         variant="outline"
-                        className="w-full"
+                        className="w-full gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
                         onClick={() => {
                           handleLogout()
                           setOpen(false)
                         }}
                       >
+                        <LogOut className="size-4" />
                         Se déconnecter
                       </Button>
                     </div>
                   ) : (
                     <div className="flex flex-col gap-3">
                       <Link href="/login" onClick={() => setOpen(false)}>
-                        <Button variant="outline" className="w-full">
+                        <Button variant="ghost" className="w-full">
                           Se connecter
                         </Button>
                       </Link>
                       <Link href="/signup" onClick={() => setOpen(false)}>
-                        <Button className="w-full">S&apos;inscrire</Button>
+                        <Button variant="ghost" className="w-full bg-primary/10 hover:bg-primary/20">
+                          S&apos;inscrire
+                        </Button>
                       </Link>
                     </div>
                   )}

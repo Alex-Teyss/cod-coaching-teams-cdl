@@ -32,6 +32,7 @@ model User {
   teamId        String?
   team          Team?     @relation(fields: [teamId], references: [id])
   coachedTeams  Team[]    @relation("CoachToTeam")
+  notifications Notification[]
 
   @@map("user")
 }
@@ -126,4 +127,29 @@ enum InvitationStatus {
   ACCEPTED
   DECLINED
   EXPIRED
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  read      Boolean          @default(false)
+  metadata  Json?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, read])
+  @@map("notification")
+}
+
+enum NotificationType {
+  INVITATION_RECEIVED
+  INVITATION_ACCEPTED
+  INVITATION_DECLINED
+  TEAM_VALIDATED
 }

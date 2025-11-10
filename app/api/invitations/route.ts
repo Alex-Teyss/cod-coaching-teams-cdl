@@ -200,23 +200,51 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Envoyer l'email d'invitation (ne pas bloquer si ça échoue)
-    const invitationUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/player/invitations`;
-
-    const emailResult = await sendInvitationEmail({
-      to: email,
-      teamName: invitation.team.name,
-      coachName: invitation.team.coach.name,
-      invitationUrl,
+    // Vérifier si l'utilisateur invité existe déjà
+    const invitedUser = await prisma.user.findUnique({
+      where: { email },
     });
 
-    if (!emailResult.success) {
-      console.warn("L'invitation a été créée mais l'email n'a pas pu être envoyé:", emailResult.error);
+    let emailSent = false;
+
+    if (invitedUser) {
+      // L'utilisateur existe : créer une notification au lieu d'envoyer un email
+      await prisma.notification.create({
+        data: {
+          userId: invitedUser.id,
+          type: "INVITATION_RECEIVED",
+          title: "Nouvelle invitation",
+          message: `Vous avez été invité à rejoindre l'équipe ${invitation.team.name} par ${invitation.team.coach.name}`,
+          metadata: {
+            invitationId: invitation.id,
+            teamId: invitation.teamId,
+            teamName: invitation.team.name,
+          },
+        },
+      });
+      console.log(`Notification créée pour l'utilisateur existant: ${email}`);
+    } else {
+      // L'utilisateur n'existe pas : envoyer un email d'invitation
+      const invitationUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/player/invitations`;
+
+      const emailResult = await sendInvitationEmail({
+        to: email,
+        teamName: invitation.team.name,
+        coachName: invitation.team.coach.name,
+        invitationUrl,
+      });
+
+      emailSent = emailResult.success;
+
+      if (!emailResult.success) {
+        console.warn("L'invitation a été créée mais l'email n'a pas pu être envoyé:", emailResult.error);
+      }
     }
 
     return NextResponse.json({
       ...invitation,
-      emailSent: emailResult.success,
+      emailSent,
+      notificationSent: !!invitedUser,
     }, { status: 201 });
   } catch (error) {
     console.error("Erreur lors de la création de l'invitation:", error);

@@ -36,16 +36,24 @@ export function LoginForm() {
     setIsLoading(true)
 
     try {
-      await signIn.email({
+      const result = await signIn.email({
         email: data.email,
         password: data.password,
+        callbackURL: "/",
       })
 
-      router.push("/")
-    } catch (err) {
-      setError("Email ou mot de passe incorrect")
+      // Vérifier si la connexion a échoué
+      if (result?.error) {
+        setError(result.error.message || "Email ou mot de passe incorrect")
+        setIsLoading(false)
+        return
+      }
+
+      // La connexion a réussi, Better Auth va gérer la redirection
+      // On ne fait pas router.push ici car Better Auth le fait automatiquement
+    } catch (err: any) {
+      setError(err?.message || "Email ou mot de passe incorrect")
       console.error(err)
-    } finally {
       setIsLoading(false)
     }
   }
