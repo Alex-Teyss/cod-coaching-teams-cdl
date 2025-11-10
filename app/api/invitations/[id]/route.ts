@@ -128,6 +128,14 @@ export async function PATCH(
       where: { email: session.user.email },
     });
 
+    // Vérifier si l'utilisateur a déjà un mot de passe configuré
+    const account = await prisma.account.findFirst({
+      where: {
+        userId: session.user.id,
+      },
+    });
+    const hasPassword = account?.password ? true : false;
+
     if (!user) {
       // Créer l'utilisateur s'il n'existe pas encore
       // Cela peut arriver si l'invitation a été envoyée avant que l'utilisateur ne s'inscrive
@@ -137,6 +145,7 @@ export async function PATCH(
           name: session.user.name || session.user.email.split("@")[0],
           role: "PLAYER",
           teamId: invitation.teamId,
+          onboardingCompleted: hasPassword, // Skip onboarding if already has password
         },
       });
     } else {
@@ -154,6 +163,8 @@ export async function PATCH(
         data: {
           teamId: invitation.teamId,
           role: "PLAYER",
+          // Only require onboarding if user doesn't have a password yet
+          onboardingCompleted: hasPassword,
         },
       });
     }

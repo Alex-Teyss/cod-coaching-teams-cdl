@@ -107,7 +107,7 @@ describe("TeamCard", () => {
     ).toBeInTheDocument();
   });
 
-  it("should close dialog when cancel is clicked", () => {
+  it("should close dialog when cancel is clicked", async () => {
     render(<TeamCard team={mockTeam} />);
     const deleteButton = screen.getByTitle("Supprimer l'équipe");
     fireEvent.click(deleteButton);
@@ -116,7 +116,7 @@ describe("TeamCard", () => {
     const cancelButton = screen.getByText("Annuler");
     fireEvent.click(cancelButton);
 
-    waitFor(() => {
+    await waitFor(() => {
       expect(
         screen.queryByText(/Êtes-vous sûr de vouloir supprimer l'équipe/)
       ).not.toBeInTheDocument();

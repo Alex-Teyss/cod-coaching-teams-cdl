@@ -305,7 +305,21 @@ export default function Home() {
 
       {/* Footer */}
       <footer id="contact" className="border-t border-border py-12 bg-muted/30 dark:bg-gray-900/50">
-        <div className="container mx-auto px-4 text-center">
+        <div className="container mx-auto px-4 text-center space-y-4">
+          <div className="flex justify-center gap-8 text-sm text-muted-foreground">
+            <Link href="/" className="hover:text-foreground transition-colors">
+              Accueil
+            </Link>
+            <a href="#about" className="hover:text-foreground transition-colors">
+              About
+            </a>
+            <a href="#features" className="hover:text-foreground transition-colors">
+              Features
+            </a>
+            <Link href="/contact" className="hover:text-foreground transition-colors">
+              Contact
+            </Link>
+          </div>
           <p className="text-sm text-muted-foreground">
             &copy; 2025 COD Coaching Teams. Tous droits réservés.
           </p>

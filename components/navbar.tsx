@@ -139,9 +139,8 @@ export function Navbar() {
                 </NavigationMenuItem>
                 <NavigationMenuItem>
                   <Link
-                    href="#contact"
+                    href="/contact"
                     className={cn(navigationMenuTriggerStyle(), "!bg-transparent hover:!bg-accent")}
-                    onClick={(e) => scrollToSection(e, "#contact")}
                   >
                     <MessageCircle className="size-4" />
                     <span>Contact</span>
@@ -230,14 +229,14 @@ export function Navbar() {
                   <Zap className="size-5" />
                   Features
                 </a>
-                <a
-                  href="#contact"
+                <Link
+                  href="/contact"
                   className="flex items-center gap-3 text-foreground/70 hover:text-foreground transition-all text-lg font-medium px-3 py-2 rounded-md hover:bg-accent"
-                  onClick={(e) => scrollToSection(e, "#contact")}
+                  onClick={() => setOpen(false)}
                 >
                   <MessageCircle className="size-5" />
                   Contact
-                </a>
+                </Link>
 
                 <div className="mt-8 pt-6 border-t border-border">
                   <div className="mb-6">

@@ -1,12 +1,44 @@
 import { test, expect } from '@playwright/test';
 
-// Helper function to login as coach
+// Helper function to login as coach (creates user if doesn't exist)
 async function loginAsCoach(page: any) {
   await page.goto('/login');
   await page.fill('input[name="email"]', 'coach@test.com');
   await page.fill('input[name="password"]', 'password123');
   await page.click('button[type="submit"]');
-  await page.waitForURL('/coach/dashboard');
+
+  // Wait for navigation
+  await page.waitForTimeout(2000);
+
+  // Check if we're on the coach dashboard
+  if (!page.url().includes('/coach/dashboard')) {
+    // Login failed, user doesn't exist - sign up first
+    await page.goto('/signup');
+
+    // Wait for page to load
+    await page.waitForLoadState('networkidle');
+
+    // Role is already defaulted to COACH, fill in the form
+    await page.fill('input[name="name"]', 'Test Coach');
+    await page.fill('input[name="email"]', 'coach@test.com');
+    await page.fill('input[name="password"]', 'password123');
+    await page.fill('input[name="confirmPassword"]', 'password123');
+
+    // Wait for form validation to complete
+    await page.waitForTimeout(1000);
+
+    // Find and click the submit button
+    const submitButton = page.locator('button[type="submit"]');
+    await submitButton.waitFor({ state: 'visible' });
+    await submitButton.click();
+
+    // Wait a bit for submission to process
+    await page.waitForTimeout(3000);
+
+    // Navigate directly to coach dashboard (signup should have completed)
+    await page.goto('/coach/dashboard');
+    await page.waitForLoadState('networkidle');
+  }
 }
 
 test.describe('Team CRUD Operations', () => {

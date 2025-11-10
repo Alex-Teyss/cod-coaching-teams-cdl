@@ -77,7 +77,8 @@ Role-based routing is handled by `lib/role-redirect.ts:8` which redirects users 
 app/
 ├── (public)
 │   ├── login/          # Authentication pages
-│   └── signup/
+│   ├── signup/
+│   └── contact/        # Contact page with email form
 ├── admin/              # Admin-only pages (protected)
 │   └── dashboard/
 ├── coach/              # Coach-only pages (protected)
@@ -90,7 +91,8 @@ app/
 └── api/                # API routes
     ├── auth/[...all]/  # Better Auth handler
     ├── teams/          # Team management
-    └── invitations/    # Invitation system
+    ├── invitations/    # Invitation system
+    └── contact/        # Contact form submission
 ```
 
 ### Path Aliases
@@ -129,11 +131,15 @@ Client-side auth hooks are available via `lib/auth-client.ts`.
 
 ### Email System
 
-Email functionality (`lib/email.ts:10`) uses Resend:
+Email functionality (`lib/email.ts`) uses Resend:
 
 - **Development**: Uses `onboarding@resend.dev` (test mode, only sends to registered email)
 - **Production**: Requires domain verification at resend.com/domains
-- **Template**: HTML email template for team invitations with 7-day expiration
+- **Templates**:
+  - Team invitations with 7-day expiration (`sendInvitationEmail`)
+  - Contact form messages to support (`sendContactEmail`)
+
+The contact form (`/contact`) sends messages to the email configured in `SUPPORT_EMAIL` environment variable.
 
 See `RESEND_EMAIL_SETUP.md` for detailed email configuration guide.
 
@@ -164,6 +170,7 @@ GOOGLE_CLIENT_SECRET=""
 # Email
 RESEND_API_KEY="re_xxxxxxxxxx"
 EMAIL_FROM="COD Coaching <noreply@yourdomain.com>"
+SUPPORT_EMAIL="contact@codcoachingteams.com"
 ```
 
 ## Adding shadcn/ui Components
