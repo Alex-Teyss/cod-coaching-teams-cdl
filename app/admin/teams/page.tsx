@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import Link from "next/link";
 
 export default async function AdminTeamsPage() {
   const teams = await prisma.team.findMany({

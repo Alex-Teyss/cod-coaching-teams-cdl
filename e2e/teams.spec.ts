@@ -1,7 +1,7 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 
 // Helper function to login as coach (creates user if doesn't exist)
-async function loginAsCoach(page: any) {
+async function loginAsCoach(page: Page) {
   await page.goto('/login');
   await page.fill('input[name="email"]', 'coach@test.com');
   await page.fill('input[name="password"]', 'password123');

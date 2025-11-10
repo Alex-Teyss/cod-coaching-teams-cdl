@@ -4,6 +4,23 @@ import { GET, PATCH, DELETE } from "../[id]/route";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 
+type SessionUser = { id: string; email: string };
+type UserMock = { id: string; role: "ADMIN" | "COACH" | "PLAYER" };
+type TeamMock = {
+  id: string;
+  name?: string;
+  image?: string | null;
+  isValidated?: boolean;
+  coachId: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+  coach?: { id: string; name: string; email: string };
+  players?: unknown[];
+  invitations?: unknown[];
+  _count?: { players: number };
+};
+type UpdateManyMock = { count: number };
+
 // Mock dependencies
 vi.mock("@/lib/prisma", () => ({
   prisma: {
@@ -51,8 +68,8 @@ describe("Team API - GET by ID", () => {
 
   it("should return 404 if team not found", async () => {
     vi.mocked(auth.api.getSession).mockResolvedValue({
-      user: { id: "user-1", email: "test@test.com" },
-    } as any);
+      user: { id: "user-1", email: "test@test.com" } as SessionUser,
+    } as unknown as Awaited<ReturnType<typeof auth.api.getSession>>);
     vi.mocked(prisma.team.findUnique).mockResolvedValue(null);
 
     const request = new NextRequest("http://localhost/api/teams/team-1");
@@ -67,17 +84,17 @@ describe("Team API - GET by ID", () => {
 
   it("should return 403 if user is not coach or admin", async () => {
     vi.mocked(auth.api.getSession).mockResolvedValue({
-      user: { id: "user-1", email: "test@test.com" },
-    } as any);
+      user: { id: "user-1", email: "test@test.com" } as SessionUser,
+    } as unknown as Awaited<ReturnType<typeof auth.api.getSession>>);
     vi.mocked(prisma.team.findUnique).mockResolvedValue({
       id: "team-1",
       name: "Team Alpha",
       coachId: "coach-1",
-    } as any);
+    } as TeamMock);
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       id: "user-1",
       role: "PLAYER",
-    } as any);
+    } as UserMock);
 
     const request = new NextRequest("http://localhost/api/teams/team-1");
     const response = await GET(request, {
@@ -91,8 +108,8 @@ describe("Team API - GET by ID", () => {
 
   it("should return team for coach owner", async () => {
     vi.mocked(auth.api.getSession).mockResolvedValue({
-      user: { id: "coach-1", email: "coach@test.com" },
-    } as any);
+      user: { id: "coach-1", email: "coach@test.com" } as SessionUser,
+    } as unknown as Awaited<ReturnType<typeof auth.api.getSession>>);
     vi.mocked(prisma.team.findUnique).mockResolvedValue({
       id: "team-1",
       name: "Team Alpha",
@@ -109,11 +126,11 @@ describe("Team API - GET by ID", () => {
       players: [],
       invitations: [],
       _count: { players: 0 },
-    } as any);
+    } as TeamMock);
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       id: "coach-1",
       role: "COACH",
-    } as any);
+    } as UserMock);
 
     const request = new NextRequest("http://localhost/api/teams/team-1");
     const response = await GET(request, {
@@ -149,8 +166,8 @@ describe("Team API - PATCH", () => {
 
   it("should return 400 if name is empty", async () => {
     vi.mocked(auth.api.getSession).mockResolvedValue({
-      user: { id: "coach-1", email: "coach@test.com" },
-    } as any);
+      user: { id: "coach-1", email: "coach@test.com" } as SessionUser,
+    } as unknown as Awaited<ReturnType<typeof auth.api.getSession>>);
 
     const request = new NextRequest("http://localhost/api/teams/team-1", {
       method: "PATCH",
@@ -167,16 +184,16 @@ describe("Team API - PATCH", () => {
 
   it("should return 403 if user is not coach owner", async () => {
     vi.mocked(auth.api.getSession).mockResolvedValue({
-      user: { id: "user-1", email: "user@test.com" },
-    } as any);
+      user: { id: "user-1", email: "user@test.com" } as SessionUser,
+    } as unknown as Awaited<ReturnType<typeof auth.api.getSession>>);
     vi.mocked(prisma.team.findUnique).mockResolvedValue({
       id: "team-1",
       coachId: "coach-1",
-    } as any);
+    } as TeamMock);
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       id: "user-1",
       role: "COACH",
-    } as any);
+    } as UserMock);
 
     const request = new NextRequest("http://localhost/api/teams/team-1", {
       method: "PATCH",
@@ -193,17 +210,17 @@ describe("Team API - PATCH", () => {
 
   it("should update team successfully", async () => {
     vi.mocked(auth.api.getSession).mockResolvedValue({
-      user: { id: "coach-1", email: "coach@test.com" },
-    } as any);
+      user: { id: "coach-1", email: "coach@test.com" } as SessionUser,
+    } as unknown as Awaited<ReturnType<typeof auth.api.getSession>>);
     vi.mocked(prisma.team.findUnique).mockResolvedValue({
       id: "team-1",
       name: "Team Alpha",
       coachId: "coach-1",
-    } as any);
+    } as TeamMock);
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       id: "coach-1",
       role: "COACH",
-    } as any);
+    } as UserMock);
     vi.mocked(prisma.team.update).mockResolvedValue({
       id: "team-1",
       name: "Updated Team",
@@ -218,7 +235,7 @@ describe("Team API - PATCH", () => {
         email: "coach@test.com",
       },
       _count: { players: 0 },
-    } as any);
+    } as TeamMock);
 
     const request = new NextRequest("http://localhost/api/teams/team-1", {
       method: "PATCH",
@@ -256,8 +273,8 @@ describe("Team API - DELETE", () => {
 
   it("should return 404 if team not found", async () => {
     vi.mocked(auth.api.getSession).mockResolvedValue({
-      user: { id: "coach-1", email: "coach@test.com" },
-    } as any);
+      user: { id: "coach-1", email: "coach@test.com" } as SessionUser,
+    } as unknown as Awaited<ReturnType<typeof auth.api.getSession>>);
     vi.mocked(prisma.team.findUnique).mockResolvedValue(null);
 
     const request = new NextRequest("http://localhost/api/teams/team-1", {
@@ -274,17 +291,17 @@ describe("Team API - DELETE", () => {
 
   it("should return 403 if user is not coach owner", async () => {
     vi.mocked(auth.api.getSession).mockResolvedValue({
-      user: { id: "user-1", email: "user@test.com" },
-    } as any);
+      user: { id: "user-1", email: "user@test.com" } as SessionUser,
+    } as unknown as Awaited<ReturnType<typeof auth.api.getSession>>);
     vi.mocked(prisma.team.findUnique).mockResolvedValue({
       id: "team-1",
       coachId: "coach-1",
       _count: { players: 0 },
-    } as any);
+    } as TeamMock);
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       id: "user-1",
       role: "COACH",
-    } as any);
+    } as UserMock);
 
     const request = new NextRequest("http://localhost/api/teams/team-1", {
       method: "DELETE",
@@ -300,21 +317,21 @@ describe("Team API - DELETE", () => {
 
   it("should delete team successfully", async () => {
     vi.mocked(auth.api.getSession).mockResolvedValue({
-      user: { id: "coach-1", email: "coach@test.com" },
-    } as any);
+      user: { id: "coach-1", email: "coach@test.com" } as SessionUser,
+    } as unknown as Awaited<ReturnType<typeof auth.api.getSession>>);
     vi.mocked(prisma.team.findUnique).mockResolvedValue({
       id: "team-1",
       coachId: "coach-1",
       _count: { players: 0 },
-    } as any);
+    } as TeamMock);
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       id: "coach-1",
       role: "COACH",
-    } as any);
+    } as UserMock);
     vi.mocked(prisma.team.delete).mockResolvedValue({
       id: "team-1",
       name: "Team Alpha",
-    } as any);
+    } as TeamMock);
 
     const request = new NextRequest("http://localhost/api/teams/team-1", {
       method: "DELETE",
@@ -330,22 +347,22 @@ describe("Team API - DELETE", () => {
 
   it("should remove players before deleting team", async () => {
     vi.mocked(auth.api.getSession).mockResolvedValue({
-      user: { id: "coach-1", email: "coach@test.com" },
-    } as any);
+      user: { id: "coach-1", email: "coach@test.com" } as SessionUser,
+    } as unknown as Awaited<ReturnType<typeof auth.api.getSession>>);
     vi.mocked(prisma.team.findUnique).mockResolvedValue({
       id: "team-1",
       coachId: "coach-1",
       _count: { players: 3 },
-    } as any);
+    } as TeamMock);
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       id: "coach-1",
       role: "COACH",
-    } as any);
-    vi.mocked(prisma.user.updateMany).mockResolvedValue({ count: 3 } as any);
+    } as UserMock);
+    vi.mocked(prisma.user.updateMany).mockResolvedValue({ count: 3 } as UpdateManyMock);
     vi.mocked(prisma.team.delete).mockResolvedValue({
       id: "team-1",
       name: "Team Alpha",
-    } as any);
+    } as TeamMock);
 
     const request = new NextRequest("http://localhost/api/teams/team-1", {
       method: "DELETE",

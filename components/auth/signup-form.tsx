@@ -47,8 +47,9 @@ export function SignupForm() {
         email: data.email,
         password: data.password,
         name: data.name,
-        role: data.role,
         callbackURL: "/",
+        // @ts-expect-error - role is a custom field in Better Auth
+        role: data.role,
       })
 
       // Vérifier si l'inscription a échoué

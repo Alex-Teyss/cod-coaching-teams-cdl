@@ -46,12 +46,18 @@ export function NotificationsPanel() {
   }
 
   useEffect(() => {
-    fetchNotifications()
+    const initializeNotifications = async () => {
+      await fetchNotifications()
+    }
+    initializeNotifications()
   }, [])
 
   useEffect(() => {
     if (isOpen) {
-      fetchNotifications()
+      const loadNotifications = async () => {
+        await fetchNotifications()
+      }
+      loadNotifications()
     }
   }, [isOpen])
 

@@ -1,0 +1,518 @@
+import { PrismaClient } from '@prisma/client'
+import { hashSync } from 'bcryptjs'
+
+const prisma = new PrismaClient()
+
+async function main() {
+  console.log('🌱 Starting database seeding...')
+
+  // Clear existing data (in reverse order of dependencies)
+  console.log('🗑️  Clearing existing data...')
+  await prisma.playerStats.deleteMany()
+  await prisma.screenshot.deleteMany()
+  await prisma.match.deleteMany()
+  await prisma.notification.deleteMany()
+  await prisma.invitation.deleteMany()
+  await prisma.team.deleteMany() // Delete teams before users (coach relationship)
+  await prisma.session.deleteMany()
+  await prisma.account.deleteMany()
+  await prisma.user.deleteMany()
+
+  // Hash password for all users (password: "Password123!")
+  const hashedPassword = hashSync('Password123!', 10)
+
+  // 1. Create Admin user
+  console.log('👤 Creating admin user...')
+  const admin = await prisma.user.create({
+    data: {
+      name: 'Admin User',
+      email: 'admin@codcoaching.com',
+      emailVerified: true,
+      role: 'ADMIN',
+      onboardingCompleted: true,
+      accounts: {
+        create: {
+          accountId: 'admin-account',
+          providerId: 'credential',
+          password: hashedPassword,
+        },
+      },
+    },
+  })
+
+  // 2. Create Coaches with Teams
+  console.log('🎯 Creating coaches and teams...')
+
+  const coach1 = await prisma.user.create({
+    data: {
+      name: 'Jean Dupont',
+      email: 'jean.dupont@codcoaching.com',
+      emailVerified: true,
+      role: 'COACH',
+      onboardingCompleted: true,
+      accounts: {
+        create: {
+          accountId: 'coach1-account',
+          providerId: 'credential',
+          password: hashedPassword,
+        },
+      },
+    },
+  })
+
+  const team1 = await prisma.team.create({
+    data: {
+      name: 'Elite Gaming',
+      coachId: coach1.id,
+      isValidated: true,
+    },
+  })
+
+  const coach2 = await prisma.user.create({
+    data: {
+      name: 'Marie Martin',
+      email: 'marie.martin@codcoaching.com',
+      emailVerified: true,
+      role: 'COACH',
+      onboardingCompleted: true,
+      accounts: {
+        create: {
+          accountId: 'coach2-account',
+          providerId: 'credential',
+          password: hashedPassword,
+        },
+      },
+    },
+  })
+
+  const team2 = await prisma.team.create({
+    data: {
+      name: 'Pro Tactics',
+      coachId: coach2.id,
+      isValidated: true,
+    },
+  })
+
+  const coach3 = await prisma.user.create({
+    data: {
+      name: 'Pierre Dubois',
+      email: 'pierre.dubois@codcoaching.com',
+      emailVerified: true,
+      role: 'COACH',
+      onboardingCompleted: true,
+      accounts: {
+        create: {
+          accountId: 'coach3-account',
+          providerId: 'credential',
+          password: hashedPassword,
+        },
+      },
+    },
+  })
+
+  const team3 = await prisma.team.create({
+    data: {
+      name: 'Thunder Squad',
+      coachId: coach3.id,
+      isValidated: false, // Not validated yet (less than 4 players)
+    },
+  })
+
+  // 3. Create Players for Team 1 (Elite Gaming)
+  console.log('🎮 Creating players for Elite Gaming...')
+  const team1Players = await Promise.all([
+    prisma.user.create({
+      data: {
+        name: 'Alex Storm',
+        email: 'alex.storm@player.com',
+        emailVerified: true,
+        role: 'PLAYER',
+        onboardingCompleted: true,
+        teamId: team1.id,
+        accounts: {
+          create: {
+            accountId: 'player1-account',
+            providerId: 'credential',
+            password: hashedPassword,
+          },
+        },
+      },
+    }),
+    prisma.user.create({
+      data: {
+        name: 'Sarah Blaze',
+        email: 'sarah.blaze@player.com',
+        emailVerified: true,
+        role: 'PLAYER',
+        onboardingCompleted: true,
+        teamId: team1.id,
+        accounts: {
+          create: {
+            accountId: 'player2-account',
+            providerId: 'credential',
+            password: hashedPassword,
+          },
+        },
+      },
+    }),
+    prisma.user.create({
+      data: {
+        name: 'Mike Shadow',
+        email: 'mike.shadow@player.com',
+        emailVerified: true,
+        role: 'PLAYER',
+        onboardingCompleted: true,
+        teamId: team1.id,
+        accounts: {
+          create: {
+            accountId: 'player3-account',
+            providerId: 'credential',
+            password: hashedPassword,
+          },
+        },
+      },
+    }),
+    prisma.user.create({
+      data: {
+        name: 'Emma Viper',
+        email: 'emma.viper@player.com',
+        emailVerified: true,
+        role: 'PLAYER',
+        onboardingCompleted: true,
+        teamId: team1.id,
+        accounts: {
+          create: {
+            accountId: 'player4-account',
+            providerId: 'credential',
+            password: hashedPassword,
+          },
+        },
+      },
+    }),
+  ])
+
+  // 4. Create Players for Team 2 (Pro Tactics)
+  console.log('🎮 Creating players for Pro Tactics...')
+  const team2Players = await Promise.all([
+    prisma.user.create({
+      data: {
+        name: 'Lucas Ghost',
+        email: 'lucas.ghost@player.com',
+        emailVerified: true,
+        role: 'PLAYER',
+        onboardingCompleted: true,
+        teamId: team2.id,
+        accounts: {
+          create: {
+            accountId: 'player5-account',
+            providerId: 'credential',
+            password: hashedPassword,
+          },
+        },
+      },
+    }),
+    prisma.user.create({
+      data: {
+        name: 'Nina Hawk',
+        email: 'nina.hawk@player.com',
+        emailVerified: true,
+        role: 'PLAYER',
+        onboardingCompleted: true,
+        teamId: team2.id,
+        accounts: {
+          create: {
+            accountId: 'player6-account',
+            providerId: 'credential',
+            password: hashedPassword,
+          },
+        },
+      },
+    }),
+    prisma.user.create({
+      data: {
+        name: 'Tom Reaper',
+        email: 'tom.reaper@player.com',
+        emailVerified: true,
+        role: 'PLAYER',
+        onboardingCompleted: true,
+        teamId: team2.id,
+        accounts: {
+          create: {
+            accountId: 'player7-account',
+            providerId: 'credential',
+            password: hashedPassword,
+          },
+        },
+      },
+    }),
+    prisma.user.create({
+      data: {
+        name: 'Lisa Phantom',
+        email: 'lisa.phantom@player.com',
+        emailVerified: true,
+        role: 'PLAYER',
+        onboardingCompleted: true,
+        teamId: team2.id,
+        accounts: {
+          create: {
+            accountId: 'player8-account',
+            providerId: 'credential',
+            password: hashedPassword,
+          },
+        },
+      },
+    }),
+  ])
+
+  // 5. Create Players for Team 3 (Thunder Squad - only 2 players)
+  console.log('🎮 Creating players for Thunder Squad...')
+  const team3Players = await Promise.all([
+    prisma.user.create({
+      data: {
+        name: 'Max Thunder',
+        email: 'max.thunder@player.com',
+        emailVerified: true,
+        role: 'PLAYER',
+        onboardingCompleted: true,
+        teamId: team3.id,
+        accounts: {
+          create: {
+            accountId: 'player9-account',
+            providerId: 'credential',
+            password: hashedPassword,
+          },
+        },
+      },
+    }),
+    prisma.user.create({
+      data: {
+        name: 'Zoe Lightning',
+        email: 'zoe.lightning@player.com',
+        emailVerified: true,
+        role: 'PLAYER',
+        onboardingCompleted: true,
+        teamId: team3.id,
+        accounts: {
+          create: {
+            accountId: 'player10-account',
+            providerId: 'credential',
+            password: hashedPassword,
+          },
+        },
+      },
+    }),
+  ])
+
+  // 6. Create Sample Matches and Stats for Team 1
+  console.log('🏆 Creating sample matches for Elite Gaming...')
+
+  const match1 = await prisma.match.create({
+    data: {
+      teamId: team1.id,
+      gameMode: 'Hardpoint',
+      map: 'Nuketown',
+      result: 'WIN',
+      createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+    },
+  })
+
+  // Create stats for match 1
+  await Promise.all(
+    team1Players.map((player, index) => {
+      const kills = 15 + Math.floor(Math.random() * 20)
+      const deaths = 8 + Math.floor(Math.random() * 15)
+      return prisma.playerStats.create({
+        data: {
+          matchId: match1.id,
+          playerId: player.id,
+          kills,
+          deaths,
+          kdRatio: parseFloat((kills / deaths).toFixed(2)),
+          score: 2000 + Math.floor(Math.random() * 3000),
+        },
+      })
+    })
+  )
+
+  const match2 = await prisma.match.create({
+    data: {
+      teamId: team1.id,
+      gameMode: 'Search & Destroy',
+      map: 'Raid',
+      result: 'LOSS',
+      createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
+    },
+  })
+
+  await Promise.all(
+    team1Players.map((player) => {
+      const kills = 8 + Math.floor(Math.random() * 12)
+      const deaths = 5 + Math.floor(Math.random() * 10)
+      return prisma.playerStats.create({
+        data: {
+          matchId: match2.id,
+          playerId: player.id,
+          kills,
+          deaths,
+          kdRatio: parseFloat((kills / deaths).toFixed(2)),
+          score: 1000 + Math.floor(Math.random() * 2000),
+        },
+      })
+    })
+  )
+
+  const match3 = await prisma.match.create({
+    data: {
+      teamId: team1.id,
+      gameMode: 'Control',
+      map: 'Express',
+      result: 'WIN',
+      createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000), // 6 hours ago
+    },
+  })
+
+  await Promise.all(
+    team1Players.map((player) => {
+      const kills = 20 + Math.floor(Math.random() * 25)
+      const deaths = 10 + Math.floor(Math.random() * 18)
+      return prisma.playerStats.create({
+        data: {
+          matchId: match3.id,
+          playerId: player.id,
+          kills,
+          deaths,
+          kdRatio: parseFloat((kills / deaths).toFixed(2)),
+          score: 2500 + Math.floor(Math.random() * 3500),
+        },
+      })
+    })
+  )
+
+  // 7. Create Sample Matches for Team 2
+  console.log('🏆 Creating sample matches for Pro Tactics...')
+
+  const match4 = await prisma.match.create({
+    data: {
+      teamId: team2.id,
+      gameMode: 'Hardpoint',
+      map: 'Standoff',
+      result: 'WIN',
+      createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
+    },
+  })
+
+  await Promise.all(
+    team2Players.map((player) => {
+      const kills = 18 + Math.floor(Math.random() * 22)
+      const deaths = 9 + Math.floor(Math.random() * 16)
+      return prisma.playerStats.create({
+        data: {
+          matchId: match4.id,
+          playerId: player.id,
+          kills,
+          deaths,
+          kdRatio: parseFloat((kills / deaths).toFixed(2)),
+          score: 2200 + Math.floor(Math.random() * 3200),
+        },
+      })
+    })
+  )
+
+  const match5 = await prisma.match.create({
+    data: {
+      teamId: team2.id,
+      gameMode: 'Search & Destroy',
+      map: 'Hijacked',
+      result: 'WIN',
+      createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000), // 12 hours ago
+    },
+  })
+
+  await Promise.all(
+    team2Players.map((player) => {
+      const kills = 10 + Math.floor(Math.random() * 15)
+      const deaths = 4 + Math.floor(Math.random() * 8)
+      return prisma.playerStats.create({
+        data: {
+          matchId: match5.id,
+          playerId: player.id,
+          kills,
+          deaths,
+          kdRatio: parseFloat((kills / deaths).toFixed(2)),
+          score: 1500 + Math.floor(Math.random() * 2500),
+        },
+      })
+    })
+  )
+
+  // 8. Create Pending Invitations for Team 3
+  console.log('📧 Creating pending invitations...')
+  await prisma.invitation.create({
+    data: {
+      email: 'newplayer1@example.com',
+      teamId: team3.id,
+      status: 'PENDING',
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+    },
+  })
+
+  await prisma.invitation.create({
+    data: {
+      email: 'newplayer2@example.com',
+      teamId: team3.id,
+      status: 'PENDING',
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    },
+  })
+
+  // 9. Create Sample Notifications
+  console.log('🔔 Creating sample notifications...')
+  await prisma.notification.create({
+    data: {
+      userId: team1Players[0].id,
+      type: 'MATCH_COMPLETED',
+      title: 'Match terminé',
+      message: 'Votre match sur Nuketown est terminé. Consultez vos stats !',
+      read: false,
+    },
+  })
+
+  await prisma.notification.create({
+    data: {
+      userId: coach1.id,
+      type: 'TEAM_VALIDATED',
+      title: 'Équipe validée',
+      message: 'Votre équipe Elite Gaming a été validée avec succès !',
+      read: true,
+    },
+  })
+
+  console.log('✅ Database seeding completed successfully!')
+  console.log('\n📊 Summary:')
+  console.log(`  - 1 Admin user`)
+  console.log(`  - 3 Coaches`)
+  console.log(`  - 3 Teams (2 validated, 1 pending)`)
+  console.log(`  - 10 Players`)
+  console.log(`  - 5 Matches`)
+  console.log(`  - ${team1Players.length * 3 + team2Players.length * 2} Player Stats`)
+  console.log(`  - 2 Pending Invitations`)
+  console.log(`  - 2 Notifications`)
+  console.log('\n🔐 All users password: Password123!')
+  console.log('\n👤 Test accounts:')
+  console.log(`  Admin: admin@codcoaching.com`)
+  console.log(`  Coach 1: jean.dupont@codcoaching.com`)
+  console.log(`  Coach 2: marie.martin@codcoaching.com`)
+  console.log(`  Coach 3: pierre.dubois@codcoaching.com`)
+  console.log(`  Player 1: alex.storm@player.com`)
+  console.log(`  Player 2: sarah.blaze@player.com`)
+  console.log(`  ... (and 8 more players)`)
+}
+
+main()
+  .catch((e) => {
+    console.error('❌ Error during seeding:', e)
+    process.exit(1)
+  })
+  .finally(async () => {
+    await prisma.$disconnect()
+  })

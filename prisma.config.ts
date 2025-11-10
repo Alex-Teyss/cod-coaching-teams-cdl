@@ -8,6 +8,9 @@ export default defineConfig({
   },
   engine: "classic",
   datasource: {
-    url: env("DATABASE_URL", { optional: true }),
+    url: env("DATABASE_URL"),
+  },
+  seed: {
+    command: "tsx prisma/seed.ts",
   },
 });

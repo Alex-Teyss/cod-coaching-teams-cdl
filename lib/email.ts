@@ -20,6 +20,18 @@ interface SendPasswordResetEmailParams {
   resetUrl: string;
 }
 
+interface ResendError {
+  message?: string;
+  [key: string]: unknown;
+}
+
+interface ResendResponse {
+  data?: { id?: string };
+  id?: string;
+  error?: ResendError;
+  [key: string]: unknown;
+}
+
 export async function sendInvitationEmail({
   to,
   teamName,
@@ -102,7 +114,7 @@ export async function sendInvitationEmail({
     // Resend v6 can return { data, error } or throw exceptions
     // Check for error property first
     if (result && 'error' in result && result.error) {
-      const errorObj = result.error as any;
+      const errorObj = result.error as ResendError;
       const errorMessage = errorObj?.message || JSON.stringify(errorObj);
       console.error("Erreur Resend lors de l'envoi de l'email:", errorMessage);
       console.error("Détails complets:", JSON.stringify({ to, from: fromEmail, teamName, error: errorObj }, null, 2));
@@ -113,7 +125,7 @@ export async function sendInvitationEmail({
     }
 
     // Success case - result should have data property with id
-    const emailId = (result as any)?.data?.id || (result as any)?.id;
+    const emailId = (result as ResendResponse)?.data?.id || (result as ResendResponse)?.id;
     if (emailId) {
       console.log(`Email envoyé avec succès (ID: ${emailId}) à ${to}`);
       return { success: true, data: result };
@@ -226,7 +238,7 @@ export async function sendContactEmail({
 
     // Resend v6 can return { data, error } or throw exceptions
     if (result && 'error' in result && result.error) {
-      const errorObj = result.error as any;
+      const errorObj = result.error as ResendError;
       const errorMessage = errorObj?.message || JSON.stringify(errorObj);
       console.error("Erreur Resend lors de l'envoi de l'email de contact:", errorMessage);
       console.error("Détails complets:", JSON.stringify({ from: email, to: toEmail, subject, error: errorObj }, null, 2));
@@ -236,7 +248,7 @@ export async function sendContactEmail({
       };
     }
 
-    const emailId = (result as any)?.data?.id || (result as any)?.id;
+    const emailId = (result as ResendResponse)?.data?.id || (result as ResendResponse)?.id;
     if (emailId) {
       console.log(`Email de contact envoyé avec succès (ID: ${emailId})`);
       return { success: true, data: result };
@@ -342,17 +354,17 @@ export async function sendPasswordResetEmail({
 
     // Resend v6 can return { data, error } or throw exceptions
     if (result && 'error' in result && result.error) {
-      const errorObj = result.error as any;
+      const errorObj = result.error as ResendError;
       const errorMessage = errorObj?.message || JSON.stringify(errorObj);
       console.error("Erreur Resend lors de l'envoi de l'email de réinitialisation:", errorMessage);
       console.error("Détails complets:", JSON.stringify({ to, from: fromEmail, error: errorObj }, null, 2));
-      return { 
-        success: false, 
+      return {
+        success: false,
         error: errorMessage,
       };
     }
 
-    const emailId = (result as any)?.data?.id || (result as any)?.id;
+    const emailId = (result as ResendResponse)?.data?.id || (result as ResendResponse)?.id;
     if (emailId) {
       console.log(`Email de réinitialisation envoyé avec succès (ID: ${emailId}) à ${to}`);
       return { success: true, data: result };

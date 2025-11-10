@@ -24,7 +24,7 @@ interface NotificationLinkParams {
  * Retourne le lien approprié pour un type de notification donné
  */
 export function getNotificationLink(params: NotificationLinkParams): string {
-  const { type, metadata } = params
+  const { type } = params
 
   switch (type) {
     case "INVITATION_RECEIVED":

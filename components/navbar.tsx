@@ -39,8 +39,8 @@ export function Navbar() {
 
   // Get the appropriate dashboard route based on user role
   const dashboardRoute = React.useMemo(() => {
-    return getDashboardRoute(session?.user?.role)
-  }, [session?.user?.role])
+    return getDashboardRoute((session?.user as { role?: string })?.role)
+  }, [session?.user])
 
   // Handle scroll event for navbar animation
   React.useEffect(() => {
@@ -164,7 +164,7 @@ export function Navbar() {
                   <DropdownMenuContent align="end" className="w-56">
                     <DropdownMenuLabel className="flex flex-col">
                       <span className="font-medium">{session.user.name}</span>
-                      <span className="text-xs text-muted-foreground">{getRoleDisplayName(session.user.role)}</span>
+                      <span className="text-xs text-muted-foreground">{getRoleDisplayName((session.user as { role?: string }).role)}</span>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleLogout} className="gap-2 text-destructive focus:text-destructive">
@@ -259,7 +259,7 @@ export function Navbar() {
                           {session.user.name}
                         </p>
                         <p className="text-sm text-muted-foreground ml-6">
-                          {getRoleDisplayName(session.user.role)}
+                          {getRoleDisplayName((session.user as { role?: string }).role)}
                         </p>
                       </div>
                       <Button

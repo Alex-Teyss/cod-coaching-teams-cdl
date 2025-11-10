@@ -206,10 +206,8 @@ export async function POST(request: NextRequest) {
       where: { email },
     });
 
-    // URL pour les nouveaux utilisateurs : page d'inscription via invitation
-    // URL pour les utilisateurs existants : page des invitations
+    // URL pour l'inscription via invitation
     const invitationUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/invite/${invitation.id}`;
-    const existingUserUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/player/invitations`;
 
     // Toujours envoyer un email (non bloquant)
     sendInvitationEmail({

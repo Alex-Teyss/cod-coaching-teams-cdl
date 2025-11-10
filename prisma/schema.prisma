@@ -30,9 +30,11 @@ model User {
   accounts      Account[]
   sessions      Session[]
   teamId        String?
-  team          Team?     @relation(fields: [teamId], references: [id])
-  coachedTeams  Team[]    @relation("CoachToTeam")
+  team          Team?          @relation(fields: [teamId], references: [id])
+  coachedTeams  Team[]         @relation("CoachToTeam")
   notifications Notification[]
+  screenshots   Screenshot[]
+  playerStats   PlayerStats[]
 
   @@map("user")
 }
@@ -55,6 +57,7 @@ model Team {
   coach       User         @relation("CoachToTeam", fields: [coachId], references: [id])
   players     User[]
   invitations Invitation[]
+  matches     Match[]
 
   @@map("team")
 }
@@ -153,4 +156,74 @@ enum NotificationType {
   INVITATION_DECLINED
   TEAM_VALIDATED
   PLAYER_REMOVED
+  SCREENSHOT_PROCESSED
+  MATCH_COMPLETED
+}
+
+model Match {
+  id          String   @id @default(cuid())
+  teamId      String
+  gameMode    String   // e.g., "Hardpoint", "Search & Destroy", "Control"
+  map         String   // e.g., "Nuketown", "Raid", "Express"
+  result      String   // "WIN", "LOSS", "DRAW"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  team        Team           @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  screenshots Screenshot[]
+  playerStats PlayerStats[]
+
+  @@index([teamId])
+  @@index([createdAt])
+  @@map("match")
+}
+
+model Screenshot {
+  id          String           @id @default(cuid())
+  matchId     String
+  uploadedBy  String
+  imageUrl    String
+  status      ScreenshotStatus @default(PENDING)
+  errorMessage String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  match       Match          @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  uploader    User           @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
+  playerStats PlayerStats[]
+
+  @@index([matchId])
+  @@index([uploadedBy])
+  @@index([status])
+  @@map("screenshot")
+}
+
+enum ScreenshotStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model PlayerStats {
+  id           String    @id @default(cuid())
+  matchId      String
+  playerId     String
+  screenshotId String?
+  kills        Int
+  deaths       Int
+  kdRatio      Float
+  score        Int
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  match        Match       @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  player       User        @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  screenshot   Screenshot? @relation(fields: [screenshotId], references: [id], onDelete: SetNull)
+
+  @@unique([matchId, playerId])
+  @@index([matchId])
+  @@index([playerId])
+  @@index([screenshotId])
+  @@map("player_stats")
 }
