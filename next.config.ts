@@ -26,15 +26,7 @@ const nextConfig: NextConfig = {
     removeConsole: process.env.NODE_ENV === 'production',
   },
 
-  // Webpack configuration for Prisma
-  webpack: (config, { isServer }) => {
-    if (isServer) {
-      config.externals.push('@prisma/client');
-    }
-    return config;
-  },
-
-  // Serverless function configuration
+  // Serverless function configuration (Turbopack compatible)
   serverExternalPackages: ['@prisma/client', '@prisma/extension-accelerate'],
 
   // Headers for security and performance
