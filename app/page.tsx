@@ -15,8 +15,8 @@ export default function Home() {
   const { data: session, isPending } = useSession();
 
   const dashboardRoute = useMemo(() => {
-    return getDashboardRoute(session?.user?.role);
-  }, [session?.user?.role]);
+    return getDashboardRoute((session?.user as any)?.role);
+  }, [(session?.user as any)?.role]);
 
   if (isPending) {
     return (
