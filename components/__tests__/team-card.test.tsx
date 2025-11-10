@@ -79,8 +79,9 @@ describe("TeamCard", () => {
       invitations: [{}, {}] as any,
     };
     render(<TeamCard team={teamWithInvitations} />);
-    expect(screen.getByText(/2/)).toBeInTheDocument();
     expect(screen.getByText(/invitations en attente/)).toBeInTheDocument();
+    const invitationCounts = screen.getAllByText("2");
+    expect(invitationCounts.length).toBeGreaterThan(0);
   });
 
   it("should have edit button", () => {
