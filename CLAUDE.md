@@ -55,6 +55,7 @@ pnpm prisma migrate reset
 - **Database**: PostgreSQL with Prisma ORM + Prisma Accelerate (connection pooling & caching)
 - **Authentication**: Better Auth with email/password and Google OAuth
 - **Email**: Resend (configured for test mode in development)
+- **AI**: Google Gemini 1.5 Flash (FREE - screenshot analysis)
 - **UI Components**: shadcn/ui (New York style, neutral base color)
 - **Styling**: Tailwind CSS v4 with CSS variables
 - **Icons**: Lucide React
@@ -84,7 +85,8 @@ app/
 ├── coach/              # Coach-only pages (protected)
 │   ├── dashboard/
 │   ├── teams/new/
-│   └── invitations/
+│   ├── invitations/
+│   └── ai-analysis/    # AI screenshot analysis
 ├── player/             # Player-only pages (protected)
 │   ├── dashboard/
 │   └── invitations/
@@ -92,6 +94,7 @@ app/
     ├── auth/[...all]/  # Better Auth handler
     ├── teams/          # Team management
     ├── invitations/    # Invitation system
+    ├── screenshots/    # AI screenshot analysis
     └── contact/        # Contact form submission
 ```
 
@@ -111,6 +114,9 @@ Key models in `prisma/schema.prisma`:
 - **User**: Core user model with role (ADMIN/COACH/PLAYER), team relationship
 - **Team**: Team entity with coach relationship and validation status
 - **Invitation**: Team invitations with email, status (PENDING/ACCEPTED/DECLINED/EXPIRED)
+- **Match**: Match records with game mode, map, and result
+- **Screenshot**: Screenshot uploads with AI analysis status
+- **PlayerStats**: Player statistics extracted from screenshots
 - **Session/Account**: Better Auth authentication tables
 - **Verification**: Email verification tokens
 
@@ -143,6 +149,35 @@ The contact form (`/contact`) sends messages to the email configured in `SUPPORT
 
 See `RESEND_EMAIL_SETUP.md` for detailed email configuration guide.
 
+### AI Screenshot Analysis System
+
+The application includes an AI-powered screenshot analysis system using Google Gemini 1.5 Flash (FREE):
+
+**Features**:
+- Automatic extraction of scoreboard data from COD screenshots
+- Support for multiple game modes (Hardpoint, Search & Destroy, Control)
+- Support for MW2, MW3, and Black Ops 6
+- Confidence scoring for extracted data
+- Real-time analysis via `/coach/ai-analysis` page
+
+**Architecture**:
+- **API Route**: `app/api/screenshots/analyze/route.ts:67` - POST endpoint for image analysis
+- **Components**:
+  - `components/ai/screenshot-analyzer.tsx:11` - Upload and analysis UI
+  - `components/ai/analysis-results.tsx:9` - Results display with tables
+- **Types**: `lib/types/scoreboard.ts` - TypeScript definitions for scoreboard data
+
+**Configuration**:
+- Requires `GEMINI_API_KEY` environment variable
+- Get free API key at: https://aistudio.google.com/app/apikey
+- See `GEMINI_SETUP.md` for detailed setup instructions
+
+**Workflow**:
+1. Coach uploads screenshot via UI
+2. Image is sent to Gemini API with structured prompt
+3. AI extracts: game, mode, map, teams, players, stats
+4. Results displayed in formatted tables with confidence levels
+
 ### Key Configuration Files
 
 - `next.config.ts`: Next.js config with security headers, image optimization, production console removal
@@ -171,6 +206,9 @@ GOOGLE_CLIENT_SECRET=""
 RESEND_API_KEY="re_xxxxxxxxxx"
 EMAIL_FROM="COD Coaching <noreply@yourdomain.com>"
 SUPPORT_EMAIL="contact@codcoachingteams.com"
+
+# AI (Google Gemini - FREE)
+GEMINI_API_KEY="AIzaSy..."
 ```
 
 ## Adding shadcn/ui Components
