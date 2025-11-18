@@ -1,7 +1,7 @@
 "use client";
 
 import { Sidebar, SidebarItem } from "./sidebar";
-import { LayoutDashboard, Users, Mail, PlusCircle, User, Sparkles } from "lucide-react";
+import { LayoutDashboard, Users, Mail, PlusCircle, User, Sparkles, Trophy } from "lucide-react";
 
 const coachItems: SidebarItem[] = [
   {
@@ -18,6 +18,11 @@ const coachItems: SidebarItem[] = [
     title: "Créer une équipe",
     href: "/coach/teams/new",
     icon: PlusCircle,
+  },
+  {
+    title: "Mes matchs",
+    href: "/coach/matches",
+    icon: Trophy,
   },
   {
     title: "Invitations",

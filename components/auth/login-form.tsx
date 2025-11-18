@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "@tanstack/react-form"
+import { zodValidator } from "@tanstack/zod-form-adapter"
 import { signIn } from "@/lib/auth-client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,6 +11,13 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
 import { loginSchema, type LoginFormData } from "@/lib/validations/auth"
+
+// Helper to extract error message from TanStack Form error object
+const getErrorMessage = (error: any): string => {
+  if (typeof error === 'string') return error
+  if (error?.message) return error.message
+  return String(error)
+}
 
 export function LoginForm() {
   const router = useRouter()
@@ -22,59 +29,48 @@ export function LoginForm() {
   const emailParam = searchParams.get("email")
   const messageParam = searchParams.get("message")
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, touchedFields, isValid, dirtyFields },
-    watch,
-    setValue,
-  } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
-    mode: "onChange",
-    reValidateMode: "onChange",
+  const form = useForm({
     defaultValues: {
       email: emailParam || "",
+      password: "",
+    } as LoginFormData,
+    validatorAdapter: zodValidator(),
+    validators: {
+      onChange: loginSchema,
+    },
+    onSubmit: async ({ value }) => {
+      setError("")
+      setIsLoading(true)
+
+      try {
+        const result = await signIn.email({
+          email: value.email,
+          password: value.password,
+          callbackURL: "/",
+        })
+
+        // Vérifier si la connexion a échoué
+        if (result?.error) {
+          setError(result.error.message || "Email ou mot de passe incorrect")
+          setIsLoading(false)
+          return
+        }
+
+        // La connexion a réussi, Better Auth va gérer la redirection
+        // On ne fait pas router.push ici car Better Auth le fait automatiquement
+      } catch (err: any) {
+        setError(err?.message || "Email ou mot de passe incorrect")
+        console.error(err)
+        setIsLoading(false)
+      }
     },
   })
 
   useEffect(() => {
-    if (emailParam) {
-      setValue("email", emailParam)
-    }
     if (messageParam) {
       setSuccessMessage(messageParam)
     }
-  }, [emailParam, messageParam, setValue])
-
-  const email = watch("email")
-  const password = watch("password")
-
-  const onSubmit = async (data: LoginFormData) => {
-    setError("")
-    setIsLoading(true)
-
-    try {
-      const result = await signIn.email({
-        email: data.email,
-        password: data.password,
-        callbackURL: "/",
-      })
-
-      // Vérifier si la connexion a échoué
-      if (result?.error) {
-        setError(result.error.message || "Email ou mot de passe incorrect")
-        setIsLoading(false)
-        return
-      }
-
-      // La connexion a réussi, Better Auth va gérer la redirection
-      // On ne fait pas router.push ici car Better Auth le fait automatiquement
-    } catch (err: any) {
-      setError(err?.message || "Email ou mot de passe incorrect")
-      console.error(err)
-      setIsLoading(false)
-    }
-  }
+  }, [messageParam])
 
   const handleGoogleSignIn = async () => {
     setError("")
@@ -100,94 +96,126 @@ export function LoginForm() {
           Connectez-vous à votre compte pour continuer
         </CardDescription>
       </CardHeader>
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          form.handleSubmit()
+        }}
+      >
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email" className={errors.email && touchedFields.email ? "text-red-600" : ""}>
-              Email
-            </Label>
-            <div className="relative">
-              <Input
-                id="email"
-                type="email"
-                placeholder="vous@exemple.com"
-                {...register("email")}
-                disabled={isLoading}
-                className={
-                  touchedFields.email && errors.email
-                    ? "border-red-500 focus-visible:ring-red-500 pr-10"
-                    : touchedFields.email && !errors.email && email
-                    ? "border-green-500 focus-visible:ring-green-500 pr-10"
-                    : ""
-                }
-              />
-              {touchedFields.email && !errors.email && email && (
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600 animate-in fade-in zoom-in-50 duration-200">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+          <form.Field name="email">
+            {(field) => {
+              const hasError = field.state.meta.isTouched && field.state.meta.errors.length > 0
+              const isValid = field.state.meta.isTouched && field.state.meta.errors.length === 0 && field.state.value
+
+              return (
+                <div className="space-y-2">
+                  <Label htmlFor={field.name} className={hasError ? "text-red-600" : ""}>
+                    Email
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id={field.name}
+                      name={field.name}
+                      type="email"
+                      placeholder="vous@exemple.com"
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      onBlur={field.handleBlur}
+                      disabled={isLoading}
+                      className={
+                        hasError
+                          ? "border-red-500 focus-visible:ring-red-500 pr-10"
+                          : isValid
+                            ? "border-green-500 focus-visible:ring-green-500 pr-10"
+                            : ""
+                      }
+                    />
+                    {isValid && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600 animate-in fade-in zoom-in-50 duration-200">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                    )}
+                    {hasError && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-red-600 animate-in fade-in zoom-in-50 duration-200">
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                  {hasError && (
+                    <p className="text-sm text-red-600 flex items-center gap-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {getErrorMessage(field.state.meta.errors[0])}
+                    </p>
+                  )}
                 </div>
-              )}
-              {touchedFields.email && errors.email && (
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-red-600 animate-in fade-in zoom-in-50 duration-200">
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                  </svg>
+              )
+            }}
+          </form.Field>
+
+          <form.Field name="password">
+            {(field) => {
+              const hasError = field.state.meta.isTouched && field.state.meta.errors.length > 0
+              const isValid = field.state.meta.isTouched && field.state.meta.errors.length === 0 && field.state.value
+
+              return (
+                <div className="space-y-2">
+                  <Label htmlFor={field.name} className={hasError ? "text-red-600" : ""}>
+                    Mot de passe
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id={field.name}
+                      name={field.name}
+                      type="password"
+                      placeholder="••••••••"
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      onBlur={field.handleBlur}
+                      disabled={isLoading}
+                      className={
+                        hasError
+                          ? "border-red-500 focus-visible:ring-red-500 pr-10"
+                          : isValid
+                            ? "border-green-500 focus-visible:ring-green-500 pr-10"
+                            : ""
+                      }
+                    />
+                    {isValid && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600 animate-in fade-in zoom-in-50 duration-200">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                    )}
+                    {hasError && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-red-600 animate-in fade-in zoom-in-50 duration-200">
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                  {hasError && (
+                    <p className="text-sm text-red-600 flex items-center gap-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {getErrorMessage(field.state.meta.errors[0])}
+                    </p>
+                  )}
                 </div>
-              )}
-            </div>
-            {touchedFields.email && errors.email && (
-              <p className="text-sm text-red-600 flex items-center gap-1 animate-in fade-in slide-in-from-top-1 duration-200">
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-                {errors.email.message}
-              </p>
-            )}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password" className={errors.password && touchedFields.password ? "text-red-600" : ""}>
-              Mot de passe
-            </Label>
-            <div className="relative">
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                {...register("password")}
-                disabled={isLoading}
-                className={
-                  touchedFields.password && errors.password
-                    ? "border-red-500 focus-visible:ring-red-500 pr-10"
-                    : touchedFields.password && !errors.password && password
-                    ? "border-green-500 focus-visible:ring-green-500 pr-10"
-                    : ""
-                }
-              />
-              {touchedFields.password && !errors.password && password && (
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600 animate-in fade-in zoom-in-50 duration-200">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-              )}
-              {touchedFields.password && errors.password && (
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-red-600 animate-in fade-in zoom-in-50 duration-200">
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                  </svg>
-                </div>
-              )}
-            </div>
-            {touchedFields.password && errors.password && (
-              <p className="text-sm text-red-600 flex items-center gap-1 animate-in fade-in slide-in-from-top-1 duration-200">
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-                {errors.password.message}
-              </p>
-            )}
-          </div>
+              )
+            }}
+          </form.Field>
+
           <div className="flex justify-end">
             <Link href="/forgot-password" className="text-sm text-primary hover:underline">
               Mot de passe oublié ?
@@ -211,9 +239,13 @@ export function LoginForm() {
           )}
         </CardContent>
         <CardFooter className="flex flex-col space-y-4 mt-6">
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Connexion..." : "Se connecter"}
-          </Button>
+          <form.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting]}>
+            {([canSubmit, isSubmitting]) => (
+              <Button type="submit" className="w-full" disabled={!canSubmit || isLoading}>
+                {isSubmitting || isLoading ? "Connexion..." : "Se connecter"}
+              </Button>
+            )}
+          </form.Subscribe>
 
           <div className="relative w-full">
             <div className="absolute inset-0 flex items-center">

@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "@tanstack/react-form";
+import { zodValidator } from "@tanstack/zod-form-adapter";
 import { playerOnboardingSchema, type PlayerOnboardingFormData } from "@/lib/validations/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,13 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { signIn, useSession } from "@/lib/auth-client";
+
+// Helper to extract error message from TanStack Form error object
+const getErrorMessage = (error: any): string => {
+  if (typeof error === 'string') return error
+  if (error?.message) return error.message
+  return String(error)
+}
 
 interface Invitation {
   id: string;
@@ -34,23 +41,66 @@ export default function InvitePage() {
   const [invitation, setInvitation] = useState<Invitation | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAccepting, setIsAccepting] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, touchedFields },
-    watch,
-  } = useForm<PlayerOnboardingFormData>({
-    resolver: zodResolver(playerOnboardingSchema),
-    mode: "onChange",
-    reValidateMode: "onChange",
-  });
+  const form = useForm<PlayerOnboardingFormData>({
+    defaultValues: {
+      name: "",
+      password: "",
+      confirmPassword: "",
+    },
+    validatorAdapter: zodValidator(),
+    validators: {
+      onChange: playerOnboardingSchema,
+    },
+    onSubmit: async ({ value }) => {
+      if (!invitation) return;
 
-  const name = watch("name");
-  const password = watch("password");
-  const confirmPassword = watch("confirmPassword");
+      setError(null);
+
+      try {
+        // Créer le compte et accepter l'invitation
+        const response = await fetch(`/api/invitations/${invitationId}/accept-signup`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: value.name,
+            password: value.password,
+            email: invitation.email,
+          }),
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || "Erreur lors de l'inscription");
+        }
+
+        // Se connecter automatiquement
+        const signInResult = await signIn.email({
+          email: invitation.email,
+          password: value.password,
+          callbackURL: "/player/dashboard",
+        });
+
+        if (signInResult?.error) {
+          // Si la connexion échoue, rediriger vers la page de connexion
+          router.push(`/login?email=${encodeURIComponent(invitation.email)}`);
+        } else {
+          // Rediriger vers le dashboard
+          router.push("/player/dashboard");
+        }
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError("Une erreur est survenue lors de l'inscription");
+        }
+      }
+    },
+  });
 
   useEffect(() => {
     if (invitationId) {
@@ -110,56 +160,6 @@ export default function InvitePage() {
         setError("Une erreur est survenue");
       }
       setIsAccepting(false);
-    }
-  };
-
-  const onSubmit = async (data: PlayerOnboardingFormData) => {
-    if (!invitation) return;
-
-    setError(null);
-    setIsSubmitting(true);
-
-    try {
-      // Créer le compte et accepter l'invitation
-      const response = await fetch(`/api/invitations/${invitationId}/accept-signup`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: data.name,
-          password: data.password,
-          email: invitation.email,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "Erreur lors de l'inscription");
-      }
-
-      // Se connecter automatiquement
-      const signInResult = await signIn.email({
-        email: invitation.email,
-        password: data.password,
-        callbackURL: "/player/dashboard",
-      });
-
-      if (signInResult?.error) {
-        // Si la connexion échoue, rediriger vers la page de connexion
-        router.push(`/login?email=${encodeURIComponent(invitation.email)}`);
-      } else {
-        // Rediriger vers le dashboard
-        router.push("/player/dashboard");
-      }
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("Une erreur est survenue lors de l'inscription");
-      }
-      setIsSubmitting(false);
     }
   };
 
@@ -271,134 +271,160 @@ export default function InvitePage() {
                 </div>
               ) : (
                 // Utilisateur non connecté ou mauvais email - afficher formulaire d'inscription
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={invitation.email}
-                  disabled
-                  className="bg-muted"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Cet email ne peut pas être modifié
-                </p>
-              </div>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    form.handleSubmit();
+                  }}
+                  className="space-y-4"
+                >
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={invitation.email}
+                      disabled
+                      className="bg-muted"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Cet email ne peut pas être modifié
+                    </p>
+                  </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="name" className={errors.name && touchedFields.name ? "text-red-600" : ""}>
-                  Nom
-                </Label>
-                <div className="relative">
-                  <Input
-                    id="name"
-                    type="text"
-                    placeholder="Jean Dupont"
-                    {...register("name")}
-                    disabled={isSubmitting}
-                    className={
-                      touchedFields.name && errors.name
-                        ? "border-red-500 focus-visible:ring-red-500 pr-10"
-                        : touchedFields.name && !errors.name && name
-                        ? "border-green-500 focus-visible:ring-green-500 pr-10"
-                        : ""
-                    }
-                  />
-                  {touchedFields.name && !errors.name && name && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
+                  <form.Field name="name">
+                    {(field) => (
+                      <div className="space-y-2">
+                        <Label htmlFor="name" className={field.state.meta.errors.length > 0 && field.state.meta.isTouched ? "text-red-600" : ""}>
+                          Nom
+                        </Label>
+                        <div className="relative">
+                          <Input
+                            id="name"
+                            type="text"
+                            placeholder="Jean Dupont"
+                            value={field.state.value}
+                            onChange={(e) => field.handleChange(e.target.value)}
+                            onBlur={field.handleBlur}
+                            className={
+                              field.state.meta.isTouched && field.state.meta.errors.length > 0
+                                ? "border-red-500 focus-visible:ring-red-500 pr-10"
+                                : field.state.meta.isTouched && field.state.meta.errors.length === 0 && field.state.value
+                                ? "border-green-500 focus-visible:ring-green-500 pr-10"
+                                : ""
+                            }
+                          />
+                          {field.state.meta.isTouched && field.state.meta.errors.length === 0 && field.state.value && (
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600">
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                            </div>
+                          )}
+                        </div>
+                        {field.state.meta.isTouched && field.state.meta.errors.length > 0 && (
+                          <p className="text-sm text-red-600">{getErrorMessage(field.state.meta.errors[0])}</p>
+                        )}
+                      </div>
+                    )}
+                  </form.Field>
+
+                  <form.Field name="password">
+                    {(field) => (
+                      <div className="space-y-2">
+                        <Label htmlFor="password" className={field.state.meta.errors.length > 0 && field.state.meta.isTouched ? "text-red-600" : ""}>
+                          Mot de passe
+                        </Label>
+                        <div className="relative">
+                          <Input
+                            id="password"
+                            type="password"
+                            placeholder="••••••••"
+                            value={field.state.value}
+                            onChange={(e) => field.handleChange(e.target.value)}
+                            onBlur={field.handleBlur}
+                            className={
+                              field.state.meta.isTouched && field.state.meta.errors.length > 0
+                                ? "border-red-500 focus-visible:ring-red-500 pr-10"
+                                : field.state.meta.isTouched && field.state.meta.errors.length === 0 && field.state.value
+                                ? "border-green-500 focus-visible:ring-green-500 pr-10"
+                                : ""
+                            }
+                          />
+                          {field.state.meta.isTouched && field.state.meta.errors.length === 0 && field.state.value && (
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600">
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                            </div>
+                          )}
+                        </div>
+                        {field.state.meta.isTouched && field.state.meta.errors.length > 0 && (
+                          <p className="text-sm text-red-600">{getErrorMessage(field.state.meta.errors[0])}</p>
+                        )}
+                      </div>
+                    )}
+                  </form.Field>
+
+                  <form.Field name="confirmPassword">
+                    {(field) => (
+                      <div className="space-y-2">
+                        <Label htmlFor="confirmPassword" className={field.state.meta.errors.length > 0 && field.state.meta.isTouched ? "text-red-600" : ""}>
+                          Confirmer le mot de passe
+                        </Label>
+                        <div className="relative">
+                          <Input
+                            id="confirmPassword"
+                            type="password"
+                            placeholder="••••••••"
+                            value={field.state.value}
+                            onChange={(e) => field.handleChange(e.target.value)}
+                            onBlur={field.handleBlur}
+                            className={
+                              field.state.meta.isTouched && field.state.meta.errors.length > 0
+                                ? "border-red-500 focus-visible:ring-red-500 pr-10"
+                                : field.state.meta.isTouched && field.state.meta.errors.length === 0 && field.state.value
+                                ? "border-green-500 focus-visible:ring-green-500 pr-10"
+                                : ""
+                            }
+                          />
+                          {field.state.meta.isTouched && field.state.meta.errors.length === 0 && field.state.value && form.state.values.password === field.state.value && (
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600">
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                            </div>
+                          )}
+                        </div>
+                        {field.state.meta.isTouched && field.state.meta.errors.length > 0 && (
+                          <p className="text-sm text-red-600">{getErrorMessage(field.state.meta.errors[0])}</p>
+                        )}
+                      </div>
+                    )}
+                  </form.Field>
+
+                  {error && (
+                    <div className="rounded-lg border border-destructive bg-destructive/10 p-4">
+                      <p className="text-sm text-destructive">{error}</p>
                     </div>
                   )}
-                </div>
-                {touchedFields.name && errors.name && (
-                  <p className="text-sm text-red-600">{errors.name.message}</p>
-                )}
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="password" className={errors.password && touchedFields.password ? "text-red-600" : ""}>
-                  Mot de passe
-                </Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    {...register("password")}
-                    disabled={isSubmitting}
-                    className={
-                      touchedFields.password && errors.password
-                        ? "border-red-500 focus-visible:ring-red-500 pr-10"
-                        : touchedFields.password && !errors.password && password
-                        ? "border-green-500 focus-visible:ring-green-500 pr-10"
-                        : ""
-                    }
-                  />
-                  {touchedFields.password && !errors.password && password && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                  )}
-                </div>
-                {touchedFields.password && errors.password && (
-                  <p className="text-sm text-red-600">{errors.password.message}</p>
-                )}
-              </div>
+                  <form.Subscribe selector={(state) => [state.isSubmitting]}>
+                    {([isSubmitting]) => (
+                      <Button type="submit" className="w-full" disabled={isSubmitting}>
+                        {isSubmitting ? "Inscription..." : "Créer mon compte et rejoindre l'équipe"}
+                      </Button>
+                    )}
+                  </form.Subscribe>
 
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword" className={errors.confirmPassword && touchedFields.confirmPassword ? "text-red-600" : ""}>
-                  Confirmer le mot de passe
-                </Label>
-                <div className="relative">
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    placeholder="••••••••"
-                    {...register("confirmPassword")}
-                    disabled={isSubmitting}
-                    className={
-                      touchedFields.confirmPassword && errors.confirmPassword
-                        ? "border-red-500 focus-visible:ring-red-500 pr-10"
-                        : touchedFields.confirmPassword && !errors.confirmPassword && confirmPassword
-                        ? "border-green-500 focus-visible:ring-green-500 pr-10"
-                        : ""
-                    }
-                  />
-                  {touchedFields.confirmPassword && !errors.confirmPassword && confirmPassword && password === confirmPassword && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                  )}
-                </div>
-                {touchedFields.confirmPassword && errors.confirmPassword && (
-                  <p className="text-sm text-red-600">{errors.confirmPassword.message}</p>
-                )}
-              </div>
-
-              {error && (
-                <div className="rounded-lg border border-destructive bg-destructive/10 p-4">
-                  <p className="text-sm text-destructive">{error}</p>
-                </div>
-              )}
-
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? "Inscription..." : "Créer mon compte et rejoindre l'équipe"}
-              </Button>
-
-              <p className="text-xs text-center text-muted-foreground">
-                Vous avez déjà un compte ?{" "}
-                <Link href="/login" className="text-primary hover:underline">
-                  Se connecter
-                </Link>
-              </p>
-            </form>
+                  <p className="text-xs text-center text-muted-foreground">
+                    Vous avez déjà un compte ?{" "}
+                    <Link href="/login" className="text-primary hover:underline">
+                      Se connecter
+                    </Link>
+                  </p>
+                </form>
               )}
             </>
           )}

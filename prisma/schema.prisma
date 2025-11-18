@@ -161,17 +161,30 @@ enum NotificationType {
 }
 
 model Match {
-  id          String   @id @default(cuid())
-  teamId      String
-  gameMode    String   // e.g., "Hardpoint", "Search & Destroy", "Control"
-  map         String   // e.g., "Nuketown", "Raid", "Express"
-  result      String   // "WIN", "LOSS", "DRAW"
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id               String   @id @default(cuid())
+  teamId           String
+  opponentTeamName String?  // Nom de l'équipe adverse
+  game             String   // "Black Ops 7", "Black Ops 6", "MW3", "MW2"
+  gameMode         String   // "Hardpoint", "Search & Destroy", "Control", etc.
+  map              String   // "Nuketown", "Raid", "Express", etc.
+  result           String   // "WIN", "LOSS", "DRAW"
+  teamScore        Int      // Score de notre équipe
+  opponentScore    Int      // Score de l'équipe adverse
 
-  team        Team           @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  screenshots Screenshot[]
-  playerStats PlayerStats[]
+  // Métadonnées optionnelles
+  season           String?
+  event            String?
+  matchDuration    String?
+  mapNumber        Int?
+  matchStatus      String?  // "completed", "in-progress"
+  screenshotQuality String? // "good", "medium", "poor"
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  team             Team           @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  screenshots      Screenshot[]
+  playerStats      PlayerStats[]
 
   @@index([teamId])
   @@index([createdAt])
@@ -210,10 +223,25 @@ model PlayerStats {
   matchId      String
   playerId     String
   screenshotId String?
+  playerName   String    // Nom du joueur dans le screenshot (peut différer du User.name)
+
+  // Stats de base
   kills        Int
   deaths       Int
+  assists      Int       @default(0)
   kdRatio      Float
-  score        Int
+
+  // Stats optionnelles selon le mode
+  damage       Int?
+  hillTime     String?   // Format MM:SS
+  captures     Int?
+  defuses      Int?
+  plants       Int?
+  zoneTime     String?   // Format MM:SS
+
+  // Confiance de l'extraction AI
+  confidence   String    @default("medium") // "high", "medium", "low"
+
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 

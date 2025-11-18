@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "@tanstack/react-form";
+import { zodValidator } from "@tanstack/zod-form-adapter";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,56 +17,61 @@ const forgotPasswordSchema = z.object({
 
 type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 
+// Helper to extract error message from TanStack Form error object
+const getErrorMessage = (error: any): string => {
+  if (typeof error === 'string') return error
+  if (error?.message) return error.message
+  return String(error)
+}
+
 export default function ForgotPasswordPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [submittedEmail, setSubmittedEmail] = useState("");
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, touchedFields },
-    watch,
-  } = useForm<ForgotPasswordFormData>({
-    resolver: zodResolver(forgotPasswordSchema),
-    mode: "onChange",
-    reValidateMode: "onChange",
+  const form = useForm({
+    defaultValues: {
+      email: "",
+    } as ForgotPasswordFormData,
+    validatorAdapter: zodValidator(),
+    validators: {
+      onChange: forgotPasswordSchema,
+    },
+    onSubmit: async ({ value }) => {
+      setError("");
+      setSuccess(false);
+      setIsLoading(true);
+
+      try {
+        const response = await fetch("/api/auth/forgot-password", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email: value.email }),
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || "Une erreur est survenue");
+        }
+
+        setSubmittedEmail(value.email);
+        setSuccess(true);
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError("Une erreur est survenue lors de l'envoi de l'email");
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    },
   });
-
-  const email = watch("email");
-
-  const onSubmit = async (data: ForgotPasswordFormData) => {
-    setError("");
-    setSuccess(false);
-    setIsLoading(true);
-
-    try {
-      const response = await fetch("/api/auth/forgot-password", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email: data.email }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "Une erreur est survenue");
-      }
-
-      setSuccess(true);
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("Une erreur est survenue lors de l'envoi de l'email");
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-background">
@@ -82,7 +87,7 @@ export default function ForgotPasswordPage() {
             <div className="space-y-4">
               <div className="rounded-lg border border-green-500 bg-green-500/10 p-4">
                 <p className="text-sm text-green-700 dark:text-green-400">
-                  Un email de réinitialisation a été envoyé à <strong>{email}</strong>. 
+                  Un email de réinitialisation a été envoyé à <strong>{submittedEmail}</strong>.
                   Vérifiez votre boîte de réception et suivez les instructions pour réinitialiser votre mot de passe.
                 </p>
               </div>
@@ -93,38 +98,57 @@ export default function ForgotPasswordPage() {
               </Link>
             </div>
           ) : (
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email" className={errors.email && touchedFields.email ? "text-red-600" : ""}>
-                  Email
-                </Label>
-                <div className="relative">
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="vous@exemple.com"
-                    {...register("email")}
-                    disabled={isLoading}
-                    className={
-                      touchedFields.email && errors.email
-                        ? "border-red-500 focus-visible:ring-red-500 pr-10"
-                        : touchedFields.email && !errors.email && email
-                        ? "border-green-500 focus-visible:ring-green-500 pr-10"
-                        : ""
-                    }
-                  />
-                  {touchedFields.email && !errors.email && email && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                form.handleSubmit();
+              }}
+              className="space-y-4"
+            >
+              <form.Field name="email">
+                {(field) => {
+                  const hasError = field.state.meta.isTouched && field.state.meta.errors.length > 0;
+                  const isValid = field.state.meta.isTouched && field.state.meta.errors.length === 0 && field.state.value;
+
+                  return (
+                    <div className="space-y-2">
+                      <Label htmlFor={field.name} className={hasError ? "text-red-600" : ""}>
+                        Email
+                      </Label>
+                      <div className="relative">
+                        <Input
+                          id={field.name}
+                          name={field.name}
+                          type="email"
+                          placeholder="vous@exemple.com"
+                          value={field.state.value}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          onBlur={field.handleBlur}
+                          disabled={isLoading}
+                          className={
+                            hasError
+                              ? "border-red-500 focus-visible:ring-red-500 pr-10"
+                              : isValid
+                                ? "border-green-500 focus-visible:ring-green-500 pr-10"
+                                : ""
+                          }
+                        />
+                        {isValid && (
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+                      {hasError && (
+                        <p className="text-sm text-red-600">{getErrorMessage(field.state.meta.errors[0])}</p>
+                      )}
                     </div>
-                  )}
-                </div>
-                {touchedFields.email && errors.email && (
-                  <p className="text-sm text-red-600">{errors.email.message}</p>
-                )}
-              </div>
+                  );
+                }}
+              </form.Field>
 
               {error && (
                 <div className="rounded-lg border border-destructive bg-destructive/10 p-4">
@@ -132,9 +156,13 @@ export default function ForgotPasswordPage() {
                 </div>
               )}
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Envoi..." : "Envoyer le lien de réinitialisation"}
-              </Button>
+              <form.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting]}>
+                {([canSubmit, isSubmitting]) => (
+                  <Button type="submit" className="w-full" disabled={!canSubmit || isLoading}>
+                    {isSubmitting || isLoading ? "Envoi..." : "Envoyer le lien de réinitialisation"}
+                  </Button>
+                )}
+              </form.Subscribe>
 
               <div className="text-center">
                 <Link href="/login" className="text-sm text-primary hover:underline">
@@ -148,4 +176,3 @@ export default function ForgotPasswordPage() {
     </div>
   );
 }
-

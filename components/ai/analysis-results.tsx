@@ -1,7 +1,7 @@
 "use client";
 
 import { ScoreboardAnalysisResult } from "@/lib/types/scoreboard";
-import { Trophy, Users, MapPin, Gamepad2 } from "lucide-react";
+import { Trophy, Users, MapPin, Gamepad2, Clock, AlertCircle, Info } from "lucide-react";
 
 interface AnalysisResultsProps {
   result: ScoreboardAnalysisResult;
@@ -10,6 +10,33 @@ interface AnalysisResultsProps {
 export function AnalysisResults({ result }: AnalysisResultsProps) {
   return (
     <div className="space-y-6">
+      {/* Metadata Alerts */}
+      {(result.metadata.partial || result.metadata.matchStatus === "in-progress" || result.metadata.notes) && (
+        <div className="rounded-lg border border-yellow-500/50 bg-yellow-500/10 p-4">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-500 mt-0.5" />
+            <div className="space-y-1">
+              {result.metadata.partial && (
+                <p className="text-sm font-medium text-yellow-800 dark:text-yellow-300">
+                  Screenshot partiel - Une seule équipe visible
+                </p>
+              )}
+              {result.metadata.matchStatus === "in-progress" && (
+                <p className="text-sm font-medium text-yellow-800 dark:text-yellow-300">
+                  Match en cours - Scoreboard de mi-match
+                  {result.metadata.timeRemaining && ` (Temps restant: ${result.metadata.timeRemaining})`}
+                </p>
+              )}
+              {result.metadata.notes && (
+                <p className="text-sm text-yellow-700 dark:text-yellow-400">
+                  {result.metadata.notes}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Match Info */}
       <div className="rounded-lg border bg-card p-6">
         <h3 className="text-lg font-semibold mb-4">Informations du match</h3>
@@ -55,15 +82,68 @@ export function AnalysisResults({ result }: AnalysisResultsProps) {
               </p>
             </div>
           </div>
+
+          {result.metadata.matchDuration && (
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-primary/10 p-3">
+                <Clock className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Durée</p>
+                <p className="font-medium">{result.metadata.matchDuration}</p>
+              </div>
+            </div>
+          )}
+
+          {result.metadata.event && (
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-primary/10 p-3">
+                <Info className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Événement</p>
+                <p className="font-medium">{result.metadata.event}</p>
+              </div>
+            </div>
+          )}
+
+          {result.metadata.season && (
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-primary/10 p-3">
+                <Trophy className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Saison</p>
+                <p className="font-medium">{result.metadata.season}</p>
+              </div>
+            </div>
+          )}
+
+          {result.metadata.mapNumber && (
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-primary/10 p-3">
+                <MapPin className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Carte N°</p>
+                <p className="font-medium">{result.metadata.mapNumber}</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Teams */}
       {result.teams.map((team, teamIndex) => (
-        <div key={teamIndex} className="rounded-lg border bg-card">
+        <div key={teamIndex} className={`rounded-lg border ${team.winner ? 'border-green-500/50 bg-green-500/5' : 'bg-card'} ${!team.visible ? 'opacity-50' : ''}`}>
           <div className="border-b p-6">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">{team.teamName}</h3>
+              <div className="flex items-center gap-3">
+                <h3 className="text-lg font-semibold">{team.teamName}</h3>
+                {!team.visible && (
+                  <span className="text-xs text-muted-foreground italic">(Non visible)</span>
+                )}
+              </div>
               <span className="text-2xl font-bold">{team.score}</span>
             </div>
           </div>
@@ -157,6 +237,45 @@ export function AnalysisResults({ result }: AnalysisResultsProps) {
           </div>
         </div>
       ))}
+
+      {/* Debug Information */}
+      {result.metadata.debug && (
+        <div className="rounded-lg border border-blue-500/50 bg-blue-500/10 p-6">
+          <div className="flex items-start gap-3 mb-4">
+            <Info className="h-5 w-5 text-blue-600 dark:text-blue-500 mt-0.5" />
+            <h3 className="font-semibold text-blue-800 dark:text-blue-300">Informations de débogage</h3>
+          </div>
+
+          {result.metadata.debug.difficultAreas && result.metadata.debug.difficultAreas.length > 0 && (
+            <div className="mb-3">
+              <p className="text-sm font-medium text-blue-700 dark:text-blue-400 mb-2">Zones difficiles à lire :</p>
+              <ul className="list-disc list-inside space-y-1">
+                {result.metadata.debug.difficultAreas.map((area, index) => (
+                  <li key={index} className="text-sm text-blue-600 dark:text-blue-500">{area}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {result.metadata.debug.ocrCorrections && result.metadata.debug.ocrCorrections.length > 0 && (
+            <div className="mb-3">
+              <p className="text-sm font-medium text-blue-700 dark:text-blue-400 mb-2">Corrections OCR appliquées :</p>
+              <ul className="list-disc list-inside space-y-1">
+                {result.metadata.debug.ocrCorrections.map((correction, index) => (
+                  <li key={index} className="text-sm text-blue-600 dark:text-blue-500">{correction}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {result.metadata.debug.suggestions && (
+            <div>
+              <p className="text-sm font-medium text-blue-700 dark:text-blue-400 mb-2">Suggestions :</p>
+              <p className="text-sm text-blue-600 dark:text-blue-500">{result.metadata.debug.suggestions}</p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Raw Text (Debug) */}
       {result.metadata.rawExtractedText && (

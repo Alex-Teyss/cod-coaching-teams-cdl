@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { ScreenshotAnalyzer } from "@/components/ai/screenshot-analyzer";
+import { AnalysisTutorial } from "@/components/ai/analysis-tutorial";
 
 export default async function AIAnalysisPage() {
   const session = await auth.api.getSession({
@@ -26,6 +27,8 @@ export default async function AIAnalysisPage() {
           Uploadez un screenshot de scoreboard COD pour en extraire automatiquement les statistiques
         </p>
       </div>
+
+      <AnalysisTutorial />
 
       <ScreenshotAnalyzer />
     </div>

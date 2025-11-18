@@ -1,16 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { Upload, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { Upload, Loader2, CheckCircle2, AlertCircle, Database, Info, ImageIcon, Sparkles, Save } from "lucide-react";
 import { ScoreboardAnalysisResult } from "@/lib/types/scoreboard";
 import { AnalysisResults } from "./analysis-results";
+
+interface AnalysisResponse extends ScoreboardAnalysisResult {
+  matchId?: string;
+  saved?: boolean;
+  saveError?: string;
+}
 
 export function ScreenshotAnalyzer() {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<ScoreboardAnalysisResult | null>(null);
+  const [result, setResult] = useState<AnalysisResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -28,7 +35,7 @@ export function ScreenshotAnalyzer() {
     }
   };
 
-  const handleAnalyze = async () => {
+  const handleAnalyze = async (saveToDb = false) => {
     if (!file) return;
 
     setLoading(true);
@@ -38,6 +45,7 @@ export function ScreenshotAnalyzer() {
     try {
       const formData = new FormData();
       formData.append("image", file);
+      formData.append("saveToDatabase", saveToDb.toString());
 
       const response = await fetch("/api/screenshots/analyze", {
         method: "POST",
@@ -55,6 +63,38 @@ export function ScreenshotAnalyzer() {
       setError(err instanceof Error ? err.message : "Une erreur est survenue");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSaveMatch = async () => {
+    if (!result || result.saved) return;
+
+    setSaving(true);
+    setError(null);
+
+    try {
+      const formData = new FormData();
+      if (file) {
+        formData.append("image", file);
+      }
+      formData.append("saveToDatabase", "true");
+
+      const response = await fetch("/api/screenshots/analyze", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Erreur lors de la sauvegarde");
+      }
+
+      const data = await response.json();
+      setResult(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Une erreur est survenue");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -112,7 +152,7 @@ export function ScreenshotAnalyzer() {
 
               <div className="flex gap-4">
                 <button
-                  onClick={handleAnalyze}
+                  onClick={() => handleAnalyze(false)}
                   disabled={loading}
                   className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -124,7 +164,7 @@ export function ScreenshotAnalyzer() {
                   ) : (
                     <>
                       <CheckCircle2 className="h-4 w-4" />
-                      Analyser le screenshot
+                      Analyser
                     </>
                   )}
                 </button>
@@ -153,6 +193,78 @@ export function ScreenshotAnalyzer() {
               </h3>
               <p className="text-sm text-muted-foreground mt-1">{error}</p>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Save Status and Button */}
+      {result && result.saved !== undefined && (
+        <div className="rounded-lg border bg-card p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-start gap-3">
+              <Database
+                className={`h-5 w-5 mt-0.5 ${
+                  result.saved
+                    ? "text-green-600 dark:text-green-500"
+                    : result.saveError
+                      ? "text-yellow-600 dark:text-yellow-500"
+                      : "text-muted-foreground"
+                }`}
+              />
+              <div>
+                {result.saved ? (
+                  <>
+                    <h3 className="font-medium text-green-800 dark:text-green-300">
+                      Match sauvegardé
+                    </h3>
+                    <p className="text-sm text-green-700 dark:text-green-400 mt-1">
+                      Le match a été sauvegardé en base de données avec succès.
+                      {result.matchId && (
+                        <span className="block mt-1 font-mono text-xs">
+                          ID: {result.matchId}
+                        </span>
+                      )}
+                    </p>
+                  </>
+                ) : result.saveError ? (
+                  <>
+                    <h3 className="font-medium text-yellow-800 dark:text-yellow-300">
+                      Erreur de sauvegarde
+                    </h3>
+                    <p className="text-sm text-yellow-700 dark:text-yellow-400 mt-1">
+                      {result.saveError}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="font-medium">Statut de sauvegarde</h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Le match n&apos;est pas encore sauvegardé en base de données.
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {!result.saved && (
+              <button
+                onClick={handleSaveMatch}
+                disabled={saving}
+                className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {saving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Sauvegarde...
+                  </>
+                ) : (
+                  <>
+                    <Database className="h-4 w-4" />
+                    Sauvegarder le match
+                  </>
+                )}
+              </button>
+            )}
           </div>
         </div>
       )}

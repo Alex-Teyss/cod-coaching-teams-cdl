@@ -59,7 +59,7 @@ pnpm prisma migrate reset
 - **UI Components**: shadcn/ui (New York style, neutral base color)
 - **Styling**: Tailwind CSS v4 with CSS variables
 - **Icons**: Lucide React
-- **Forms**: React Hook Form + Zod validation
+- **Forms**: TanStack Form + Zod validation
 - **Animations**: Motion (Framer Motion)
 
 ### Role-Based Access Control

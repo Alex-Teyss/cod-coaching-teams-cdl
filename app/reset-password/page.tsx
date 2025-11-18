@@ -2,8 +2,8 @@
 
 import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "@tanstack/react-form";
+import { zodValidator } from "@tanstack/zod-form-adapter";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +30,13 @@ const resetPasswordSchema = z
 
 type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 
+// Helper to extract error message from TanStack Form error object
+const getErrorMessage = (error: any): string => {
+  if (typeof error === 'string') return error
+  if (error?.message) return error.message
+  return String(error)
+}
+
 function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -41,19 +48,56 @@ function ResetPasswordForm() {
   const [isValidating, setIsValidating] = useState(true);
   const [isValidToken, setIsValidToken] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, touchedFields },
-    watch,
-  } = useForm<ResetPasswordFormData>({
-    resolver: zodResolver(resetPasswordSchema),
-    mode: "onChange",
-    reValidateMode: "onChange",
-  });
+  const form = useForm({
+    defaultValues: {
+      password: "",
+      confirmPassword: "",
+    } as ResetPasswordFormData,
+    validatorAdapter: zodValidator(),
+    validators: {
+      onChange: resetPasswordSchema,
+    },
+    onSubmit: async ({ value }) => {
+      if (!token) return;
 
-  const password = watch("password");
-  const confirmPassword = watch("confirmPassword");
+      setError("");
+      setSuccess(false);
+      setIsLoading(true);
+
+      try {
+        const response = await fetch("/api/auth/reset-password", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            token,
+            password: value.password,
+          }),
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || "Une erreur est survenue");
+        }
+
+        setSuccess(true);
+        // Rediriger vers la page de connexion après 3 secondes
+        setTimeout(() => {
+          router.push("/login");
+        }, 3000);
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError("Une erreur est survenue lors de la réinitialisation");
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    },
+  });
 
   useEffect(() => {
     if (token) {
@@ -84,47 +128,6 @@ function ResetPasswordForm() {
       setIsValidToken(false);
     } finally {
       setIsValidating(false);
-    }
-  };
-
-  const onSubmit = async (data: ResetPasswordFormData) => {
-    if (!token) return;
-
-    setError("");
-    setSuccess(false);
-    setIsLoading(true);
-
-    try {
-      const response = await fetch("/api/auth/reset-password", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          token,
-          password: data.password,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "Une erreur est survenue");
-      }
-
-      setSuccess(true);
-      // Rediriger vers la page de connexion après 3 secondes
-      setTimeout(() => {
-        router.push("/login");
-      }, 3000);
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("Une erreur est survenue lors de la réinitialisation");
-      }
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -191,70 +194,102 @@ function ResetPasswordForm() {
               </Link>
             </div>
           ) : (
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="password" className={errors.password && touchedFields.password ? "text-red-600" : ""}>
-                  Nouveau mot de passe
-                </Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    {...register("password")}
-                    disabled={isLoading}
-                    className={
-                      touchedFields.password && errors.password
-                        ? "border-red-500 focus-visible:ring-red-500 pr-10"
-                        : touchedFields.password && !errors.password && password
-                        ? "border-green-500 focus-visible:ring-green-500 pr-10"
-                        : ""
-                    }
-                  />
-                  {touchedFields.password && !errors.password && password && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                  )}
-                </div>
-                {touchedFields.password && errors.password && (
-                  <p className="text-sm text-red-600">{errors.password.message}</p>
-                )}
-              </div>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                form.handleSubmit();
+              }}
+              className="space-y-4"
+            >
+              <form.Field name="password">
+                {(field) => {
+                  const hasError = field.state.meta.isTouched && field.state.meta.errors.length > 0;
+                  const isValid = field.state.meta.isTouched && field.state.meta.errors.length === 0 && field.state.value;
 
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword" className={errors.confirmPassword && touchedFields.confirmPassword ? "text-red-600" : ""}>
-                  Confirmer le mot de passe
-                </Label>
-                <div className="relative">
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    placeholder="••••••••"
-                    {...register("confirmPassword")}
-                    disabled={isLoading}
-                    className={
-                      touchedFields.confirmPassword && errors.confirmPassword
-                        ? "border-red-500 focus-visible:ring-red-500 pr-10"
-                        : touchedFields.confirmPassword && !errors.confirmPassword && confirmPassword && password === confirmPassword
-                        ? "border-green-500 focus-visible:ring-green-500 pr-10"
-                        : ""
-                    }
-                  />
-                  {touchedFields.confirmPassword && !errors.confirmPassword && confirmPassword && password === confirmPassword && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
+                  return (
+                    <div className="space-y-2">
+                      <Label htmlFor={field.name} className={hasError ? "text-red-600" : ""}>
+                        Nouveau mot de passe
+                      </Label>
+                      <div className="relative">
+                        <Input
+                          id={field.name}
+                          name={field.name}
+                          type="password"
+                          placeholder="••••••••"
+                          value={field.state.value}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          onBlur={field.handleBlur}
+                          disabled={isLoading}
+                          className={
+                            hasError
+                              ? "border-red-500 focus-visible:ring-red-500 pr-10"
+                              : isValid
+                                ? "border-green-500 focus-visible:ring-green-500 pr-10"
+                                : ""
+                          }
+                        />
+                        {isValid && (
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+                      {hasError && (
+                        <p className="text-sm text-red-600">{getErrorMessage(field.state.meta.errors[0])}</p>
+                      )}
                     </div>
-                  )}
-                </div>
-                {touchedFields.confirmPassword && errors.confirmPassword && (
-                  <p className="text-sm text-red-600">{errors.confirmPassword.message}</p>
-                )}
-              </div>
+                  );
+                }}
+              </form.Field>
+
+              <form.Field name="confirmPassword">
+                {(field) => {
+                  const hasError = field.state.meta.isTouched && field.state.meta.errors.length > 0;
+                  const passwordField = form.getFieldValue("password");
+                  const isValid = field.state.meta.isTouched && field.state.meta.errors.length === 0 && field.state.value && passwordField === field.state.value;
+
+                  return (
+                    <div className="space-y-2">
+                      <Label htmlFor={field.name} className={hasError ? "text-red-600" : ""}>
+                        Confirmer le mot de passe
+                      </Label>
+                      <div className="relative">
+                        <Input
+                          id={field.name}
+                          name={field.name}
+                          type="password"
+                          placeholder="••••••••"
+                          value={field.state.value}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          onBlur={field.handleBlur}
+                          disabled={isLoading}
+                          className={
+                            hasError
+                              ? "border-red-500 focus-visible:ring-red-500 pr-10"
+                              : isValid
+                                ? "border-green-500 focus-visible:ring-green-500 pr-10"
+                                : ""
+                          }
+                        />
+                        {isValid && (
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+                      {hasError && (
+                        <p className="text-sm text-red-600">{getErrorMessage(field.state.meta.errors[0])}</p>
+                      )}
+                    </div>
+                  );
+                }}
+              </form.Field>
 
               {error && (
                 <div className="rounded-lg border border-destructive bg-destructive/10 p-4">
@@ -262,9 +297,13 @@ function ResetPasswordForm() {
                 </div>
               )}
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Réinitialisation..." : "Réinitialiser le mot de passe"}
-              </Button>
+              <form.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting]}>
+                {([canSubmit, isSubmitting]) => (
+                  <Button type="submit" className="w-full" disabled={!canSubmit || isLoading}>
+                    {isSubmitting || isLoading ? "Réinitialisation..." : "Réinitialiser le mot de passe"}
+                  </Button>
+                )}
+              </form.Subscribe>
 
               <div className="text-center">
                 <Link href="/login" className="text-sm text-primary hover:underline">
@@ -296,4 +335,3 @@ export default function ResetPasswordPage() {
     </Suspense>
   );
 }
-

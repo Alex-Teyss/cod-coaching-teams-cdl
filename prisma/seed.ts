@@ -1,7 +1,19 @@
 import { PrismaClient } from '@prisma/client'
-import { hashSync } from 'bcryptjs'
+import crypto from 'crypto'
 
 const prisma = new PrismaClient()
+
+// Better Auth's default password hashing (from their source code)
+// They use a simple salt:hash format with crypto.pbkdf2
+async function hashPassword(password: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const salt = crypto.randomBytes(16).toString('hex')
+    crypto.pbkdf2(password, salt, 10000, 64, 'sha512', (err, derivedKey) => {
+      if (err) reject(err)
+      resolve(salt + ':' + derivedKey.toString('hex'))
+    })
+  })
+}
 
 async function main() {
   console.log('🌱 Starting database seeding...')
@@ -19,7 +31,8 @@ async function main() {
   await prisma.user.deleteMany()
 
   // Hash password for all users (password: "Password123!")
-  const hashedPassword = hashSync('Password123!', 10)
+  // Using Better Auth's password hashing format
+  const hashedPassword = await hashPassword('Password123!')
 
   // 1. Create Admin user
   console.log('👤 Creating admin user...')
@@ -309,9 +322,13 @@ async function main() {
   const match1 = await prisma.match.create({
     data: {
       teamId: team1.id,
+      game: 'Black Ops 6',
       gameMode: 'Hardpoint',
       map: 'Nuketown',
       result: 'WIN',
+      teamScore: 250,
+      opponentScore: 180,
+      opponentTeamName: 'OpTic Gaming',
       createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
     },
   })
@@ -325,10 +342,11 @@ async function main() {
         data: {
           matchId: match1.id,
           playerId: player.id,
+          playerName: player.name,
           kills,
           deaths,
           kdRatio: parseFloat((kills / deaths).toFixed(2)),
-          score: 2000 + Math.floor(Math.random() * 3000),
+          hillTime: `${Math.floor(Math.random() * 3)}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}`,
         },
       })
     })
@@ -337,9 +355,13 @@ async function main() {
   const match2 = await prisma.match.create({
     data: {
       teamId: team1.id,
+      game: 'Black Ops 6',
       gameMode: 'Search & Destroy',
       map: 'Raid',
       result: 'LOSS',
+      teamScore: 3,
+      opponentScore: 6,
+      opponentTeamName: 'FaZe Clan',
       createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
     },
   })
@@ -352,10 +374,12 @@ async function main() {
         data: {
           matchId: match2.id,
           playerId: player.id,
+          playerName: player.name,
           kills,
           deaths,
           kdRatio: parseFloat((kills / deaths).toFixed(2)),
-          score: 1000 + Math.floor(Math.random() * 2000),
+          plants: Math.floor(Math.random() * 3),
+          defuses: Math.floor(Math.random() * 2),
         },
       })
     })
@@ -364,9 +388,13 @@ async function main() {
   const match3 = await prisma.match.create({
     data: {
       teamId: team1.id,
+      game: 'Black Ops 6',
       gameMode: 'Control',
       map: 'Express',
       result: 'WIN',
+      teamScore: 3,
+      opponentScore: 1,
+      opponentTeamName: '100 Thieves',
       createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000), // 6 hours ago
     },
   })
@@ -379,10 +407,12 @@ async function main() {
         data: {
           matchId: match3.id,
           playerId: player.id,
+          playerName: player.name,
           kills,
           deaths,
           kdRatio: parseFloat((kills / deaths).toFixed(2)),
-          score: 2500 + Math.floor(Math.random() * 3500),
+          captures: Math.floor(Math.random() * 5),
+          zoneTime: `${Math.floor(Math.random() * 2)}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}`,
         },
       })
     })
@@ -394,9 +424,13 @@ async function main() {
   const match4 = await prisma.match.create({
     data: {
       teamId: team2.id,
+      game: 'MW3',
       gameMode: 'Hardpoint',
       map: 'Standoff',
       result: 'WIN',
+      teamScore: 250,
+      opponentScore: 220,
+      opponentTeamName: 'Team Envy',
       createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
     },
   })
@@ -409,10 +443,11 @@ async function main() {
         data: {
           matchId: match4.id,
           playerId: player.id,
+          playerName: player.name,
           kills,
           deaths,
           kdRatio: parseFloat((kills / deaths).toFixed(2)),
-          score: 2200 + Math.floor(Math.random() * 3200),
+          hillTime: `${Math.floor(Math.random() * 3)}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}`,
         },
       })
     })
@@ -421,9 +456,13 @@ async function main() {
   const match5 = await prisma.match.create({
     data: {
       teamId: team2.id,
+      game: 'MW3',
       gameMode: 'Search & Destroy',
       map: 'Hijacked',
       result: 'WIN',
+      teamScore: 6,
+      opponentScore: 4,
+      opponentTeamName: 'Atlanta Reign',
       createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000), // 12 hours ago
     },
   })
@@ -436,10 +475,12 @@ async function main() {
         data: {
           matchId: match5.id,
           playerId: player.id,
+          playerName: player.name,
           kills,
           deaths,
           kdRatio: parseFloat((kills / deaths).toFixed(2)),
-          score: 1500 + Math.floor(Math.random() * 2500),
+          plants: Math.floor(Math.random() * 4),
+          defuses: Math.floor(Math.random() * 3),
         },
       })
     })
