@@ -189,7 +189,7 @@ export function AnalysisResults({ result }: AnalysisResultsProps) {
                       <td className="text-center py-3">{player.deaths}</td>
                       <td className="text-center py-3">{player.assists}</td>
                       <td className="text-center py-3">
-                        {player.ratio.toFixed(2)}
+                        {player.ratio !== undefined && !isNaN(player.ratio) ? player.ratio.toFixed(2) : "0.00"}
                       </td>
                       {team.players.some((p) => p.damage !== undefined) && (
                         <td className="text-center py-3">

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { saveMatchFromAnalysis } from "@/lib/services/match-service";
+import { TeamScoreboardData, PlayerScoreboardData } from "@/lib/types/scoreboard";
 
 // The client gets the API key from the environment variable `GEMINI_API_KEY`.
 const ai = new GoogleGenAI({});
@@ -224,6 +225,23 @@ export async function POST(req: NextRequest) {
 
     // Parse JSON
     const analysisResult = JSON.parse(jsonText);
+
+    // Post-process: Calculate K/D ratio for each player if missing
+    if (analysisResult.teams) {
+      analysisResult.teams.forEach((team: TeamScoreboardData) => {
+        if (team.players) {
+          team.players.forEach((player: PlayerScoreboardData) => {
+            // Calculate ratio if it's missing or undefined
+            if (player.ratio === undefined || player.ratio === null || isNaN(player.ratio)) {
+              const kills = Number(player.kills) || 0;
+              const deaths = Number(player.deaths) || 0;
+              // Calculate K/D ratio, avoiding division by zero
+              player.ratio = deaths > 0 ? kills / deaths : kills;
+            }
+          });
+        }
+      });
+    }
 
     // Save match to database if user has a team AND wants to save
     if (saveToDatabase && session.user.teamId) {
