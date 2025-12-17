@@ -18,16 +18,32 @@ export default async function MatchesPage() {
     redirect("/login");
   }
 
-  if (!session.user.teamId) {
-    redirect("/coach/teams/new");
-  }
+  // Récupérer toutes les équipes coachées par l'utilisateur
+  const coachedTeams = await prisma.team.findMany({
+    where: {
+      coachId: session.user.id,
+    },
+    select: {
+      id: true,
+      name: true,
+    },
+  });
 
-  // Récupérer les matchs de l'équipe du coach
+  const teamIds = coachedTeams.map((team) => team.id);
+
+  // Récupérer tous les matchs des équipes coachées
   const matches = await prisma.match.findMany({
     where: {
-      teamId: session.user.teamId,
+      teamId: {
+        in: teamIds,
+      },
     },
     include: {
+      team: {
+        select: {
+          name: true,
+        },
+      },
       playerStats: {
         include: {
           player: {
@@ -45,19 +61,23 @@ export default async function MatchesPage() {
     },
   });
 
-  const team = await prisma.team.findUnique({
-    where: { id: session.user.teamId },
-    select: {
-      name: true,
-    },
-  });
+  // Trouver l'équipe active si elle existe
+  const activeTeam = session.user.teamId
+    ? coachedTeams.find((team) => team.id === session.user.teamId)
+    : null;
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Mes matchs</h1>
         <p className="text-muted-foreground mt-2">
-          Historique des matchs de {team?.name}
+          {activeTeam
+            ? `Historique des matchs de ${activeTeam.name}`
+            : coachedTeams.length > 0
+            ? `Historique de tous vos matchs (${coachedTeams.length} équipe${
+                coachedTeams.length > 1 ? "s" : ""
+              })`
+            : "Aucune équipe trouvée"}
         </p>
       </div>
 
