@@ -318,7 +318,7 @@ describe("saveMatchFromAnalysis", () => {
     });
   });
 
-  it("should omit result field when team name is not found", async () => {
+  it("should set result to undefined when team name is not found", async () => {
     vi.mocked(prisma.team.findUnique).mockResolvedValueOnce({ name: "My Team" } as any);
     vi.mocked(prisma.match.create).mockResolvedValueOnce({ id: "match-1" } as any);
     vi.mocked(prisma.user.findMany).mockResolvedValueOnce([]);
@@ -332,8 +332,8 @@ describe("saveMatchFromAnalysis", () => {
     const createCall = vi.mocked(prisma.match.create).mock.calls[0][0];
     expect(createCall.data).toMatchObject({
       teamScore: 0,
+      result: undefined,
     });
-    expect(createCall.data).not.toHaveProperty("result");
   });
 
   it("should save all player stats fields", async () => {
