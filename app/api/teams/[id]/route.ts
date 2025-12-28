@@ -25,19 +25,19 @@ export async function GET(
         coach: {
           select: {
             id: true,
-            name: true,
+            username: true,
             email: true,
           },
         },
         players: {
           select: {
             id: true,
-            name: true,
+            username: true,
             email: true,
             image: true,
           },
           orderBy: {
-            name: "asc",
+            username: "asc",
           },
         },
         invitations: {
@@ -160,7 +160,7 @@ export async function PATCH(
         coach: {
           select: {
             id: true,
-            name: true,
+            username: true,
             email: true,
           },
         },

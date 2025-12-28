@@ -148,7 +148,7 @@ export async function PATCH(
       user = await prisma.user.create({
         data: {
           email: session.user.email,
-          name: session.user.name || session.user.email.split("@")[0],
+          username: session.user.name || session.user.email.split("@")[0],
           role: "PLAYER",
           teamId: invitation.teamId,
           onboardingCompleted: hasPassword, // Skip onboarding if already has password
@@ -195,7 +195,7 @@ export async function PATCH(
       teamId: updatedInvitation.teamId,
       teamName: updatedInvitation.team.name,
       playerId: user.id,
-      playerName: user.name,
+      playerName: user.username,
     };
 
     await prisma.notification.create({

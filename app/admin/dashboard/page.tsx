@@ -100,7 +100,7 @@ export default async function AdminDashboard() {
                   className="flex items-center justify-between"
                 >
                   <div>
-                    <p className="font-medium">{user.name}</p>
+                    <p className="font-medium">{user.username}</p>
                     <p className="text-sm text-muted-foreground">
                       {user.email}
                     </p>
@@ -141,7 +141,7 @@ export default async function AdminDashboard() {
                     <div>
                       <p className="font-medium">{team.name}</p>
                       <p className="text-sm text-muted-foreground">
-                        Coach: {team.coach.name}
+                        Coach: {team.coach.username}
                       </p>
                     </div>
                     <span className="text-sm text-muted-foreground">

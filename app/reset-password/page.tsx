@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
+import { Eye, EyeOff } from "lucide-react";
 
 const resetPasswordSchema = z
   .object({
@@ -47,6 +48,8 @@ function ResetPasswordForm() {
   const [success, setSuccess] = useState(false);
   const [isValidating, setIsValidating] = useState(true);
   const [isValidToken, setIsValidToken] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const form = useForm({
     defaultValues: {
@@ -216,7 +219,7 @@ function ResetPasswordForm() {
                         <Input
                           id={field.name}
                           name={field.name}
-                          type="password"
+                          type={showPassword ? "text" : "password"}
                           placeholder="••••••••"
                           value={field.state.value}
                           onChange={(e) => field.handleChange(e.target.value)}
@@ -224,14 +227,26 @@ function ResetPasswordForm() {
                           disabled={isLoading}
                           className={
                             hasError
-                              ? "border-red-500 focus-visible:ring-red-500 pr-10"
+                              ? "border-red-500 focus-visible:ring-red-500 pr-20"
                               : isValid
-                                ? "border-green-500 focus-visible:ring-green-500 pr-10"
-                                : ""
+                                ? "border-green-500 focus-visible:ring-green-500 pr-20"
+                                : "pr-10"
                           }
                         />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                          disabled={isLoading}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
                         {isValid && (
-                          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600">
+                          <div className="absolute right-11 top-1/2 -translate-y-1/2 text-green-600">
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
@@ -261,7 +276,7 @@ function ResetPasswordForm() {
                         <Input
                           id={field.name}
                           name={field.name}
-                          type="password"
+                          type={showConfirmPassword ? "text" : "password"}
                           placeholder="••••••••"
                           value={field.state.value}
                           onChange={(e) => field.handleChange(e.target.value)}
@@ -269,14 +284,26 @@ function ResetPasswordForm() {
                           disabled={isLoading}
                           className={
                             hasError
-                              ? "border-red-500 focus-visible:ring-red-500 pr-10"
+                              ? "border-red-500 focus-visible:ring-red-500 pr-20"
                               : isValid
-                                ? "border-green-500 focus-visible:ring-green-500 pr-10"
-                                : ""
+                                ? "border-green-500 focus-visible:ring-green-500 pr-20"
+                                : "pr-10"
                           }
                         />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                          disabled={isLoading}
+                        >
+                          {showConfirmPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
                         {isValid && (
-                          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600">
+                          <div className="absolute right-11 top-1/2 -translate-y-1/2 text-green-600">
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>

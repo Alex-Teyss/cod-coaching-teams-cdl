@@ -193,7 +193,7 @@ export async function POST(request: NextRequest) {
             name: true,
             coach: {
               select: {
-                name: true,
+                username: true,
               },
             },
           },

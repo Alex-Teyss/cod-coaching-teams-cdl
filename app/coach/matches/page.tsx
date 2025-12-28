@@ -45,11 +45,24 @@ export default async function MatchesPage() {
         },
       },
       playerStats: {
-        include: {
+        select: {
+          id: true,
+          playerName: true,
+          teamName: true,
+          kills: true,
+          deaths: true,
+          assists: true,
+          kdRatio: true,
+          damage: true,
+          hillTime: true,
+          captures: true,
+          defuses: true,
+          plants: true,
+          confidence: true,
           player: {
             select: {
               id: true,
-              name: true,
+              username: true,
               image: true,
             },
           },

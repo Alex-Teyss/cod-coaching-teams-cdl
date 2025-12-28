@@ -26,7 +26,12 @@ export default async function PlayerProfilePage() {
           <h3 className="text-lg font-semibold">Informations du profil</h3>
         </div>
         <div className="p-6">
-          <ProfileForm user={session.user} />
+          <ProfileForm user={{
+            id: session.user.id,
+            username: session.user.name,
+            email: session.user.email,
+            image: session.user.image
+          }} />
         </div>
       </div>
     </div>

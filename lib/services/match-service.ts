@@ -14,35 +14,52 @@ export async function saveMatchFromAnalysis({
 }: SaveMatchParams) {
   const { game, mode, map, teams, metadata } = analysisResult;
 
-  // Trouver l'équipe du coach (notre équipe)
-  const ourTeam = teams.find((t) => t.visible !== false);
-  const opponentTeam = teams.find((t, index) => index !== teams.indexOf(ourTeam));
+  // Récupérer le nom de notre équipe depuis la base de données
+  const team = await prisma.team.findUnique({
+    where: { id: teamId },
+    select: { name: true },
+  });
 
-  if (!ourTeam) {
-    throw new Error("Aucune équipe visible dans l'analyse");
+  if (!team) {
+    throw new Error("Équipe introuvable");
   }
 
-  // Déterminer le résultat du match
-  const ourScore = ourTeam.score;
-  const opponentScore = opponentTeam?.score || 0;
-  let result = "DRAW";
+  // Trouver notre équipe dans l'analyse en comparant les noms
+  const ourTeam = teams.find(
+    (t) => t.teamName?.toLowerCase() === team.name.toLowerCase()
+  );
 
-  if (ourTeam.winner === true) {
-    result = "WIN";
-  } else if (ourTeam.winner === false) {
-    result = "LOSS";
-  } else if (ourScore > opponentScore) {
-    result = "WIN";
-  } else if (ourScore < opponentScore) {
-    result = "LOSS";
+  // Trouver l'équipe adverse
+  const opponentTeam = teams.find((t) => t !== ourTeam);
+
+  // Déterminer le résultat du match SEULEMENT si notre équipe est trouvée
+  let result: string | null = null;
+  let ourScore = 0;
+  let opponentScore = opponentTeam?.score || 0;
+
+  if (ourTeam) {
+    // Notre équipe a été trouvée dans le screenshot
+    ourScore = ourTeam.score;
+
+    if (ourTeam.winner === true) {
+      result = "WIN";
+    } else if (ourTeam.winner === false) {
+      result = "LOSS";
+    } else if (ourScore > opponentScore) {
+      result = "WIN";
+    } else if (ourScore < opponentScore) {
+      result = "LOSS";
+    } else {
+      result = "DRAW";
+    }
   }
+  // Si ourTeam n'est pas trouvé, result reste null
 
   // Créer le match avec ses stats
   const match = await prisma.match.create({
     data: {
-      teamId,
       opponentTeamName: opponentTeam?.teamName || "Équipe inconnue",
-      game,
+      game: game || null,
       gameMode: mode,
       map,
       result,
@@ -54,43 +71,73 @@ export async function saveMatchFromAnalysis({
       mapNumber: metadata.mapNumber,
       matchStatus: metadata.matchStatus || "completed",
       screenshotQuality: metadata.screenshotQuality,
+      team: {
+        connect: { id: teamId },
+      },
     },
   });
 
   // Récupérer les joueurs de l'équipe pour le matching
   const teamPlayers = await prisma.user.findMany({
     where: { teamId },
-    select: { id: true, name: true },
+    select: { id: true, username: true },
   });
 
-  // Sauvegarder les stats de chaque joueur
-  for (const player of ourTeam.players) {
-    // Essayer de matcher le joueur avec un utilisateur de l'équipe
-    const matchedPlayer = teamPlayers.find(
-      (tp) => tp.name.toLowerCase() === player.name.toLowerCase()
-    );
+  // Sauvegarder les stats de TOUS les joueurs de TOUTES les équipes
+  console.log("📊 [SAVE] Saving player stats for", teams.length, "teams");
 
-    if (matchedPlayer) {
+  for (let teamIndex = 0; teamIndex < teams.length; teamIndex++) {
+    const team = teams[teamIndex];
+    // Fallback si le teamName est vide ou undefined
+    const teamName = team.teamName || `Équipe ${teamIndex + 1}`;
+
+    console.log("👥 [SAVE] Processing team:", teamName, "- Players:", team.players?.length || 0);
+
+    if (!team.players || team.players.length === 0) {
+      console.log("⚠️  [SAVE] Skipping team with no players:", teamName);
+      continue;
+    }
+
+    for (const player of team.players) {
+      console.log("  👤 [SAVE] Saving stats for player:", player.name, "from team:", teamName);
+
+      // Essayer de matcher le joueur avec un utilisateur de l'équipe
+      const matchedPlayer = teamPlayers.find(
+        (tp) => tp.username.toLowerCase() === player.name.toLowerCase()
+      );
+
+      // Sauvegarder les stats même si le joueur n'est pas matché
       await prisma.playerStats.create({
         data: {
-          matchId: match.id,
-          playerId: matchedPlayer.id,
           playerName: player.name,
-          kills: player.kills,
-          deaths: player.deaths,
-          assists: player.assists,
-          kdRatio: player.ratio,
-          damage: player.damage,
-          hillTime: player.hillTime,
-          captures: player.captures,
-          defuses: player.defuses,
-          plants: player.plants,
-          zoneTime: player.zoneTime,
-          confidence: player.confidence,
+          teamName: teamName,
+          kills: player.kills || 0,
+          deaths: player.deaths || 0,
+          assists: player.assists || 0,
+          kdRatio: player.ratio || 0,
+          damage: player.damage || null,
+          hillTime: player.hillTime || null,
+          captures: player.captures || null,
+          defuses: player.defuses || null,
+          plants: player.plants || null,
+          zoneTime: player.zoneTime || null,
+          confidence: player.confidence || "medium",
+          match: {
+            connect: { id: match.id },
+          },
+          ...(matchedPlayer && {
+            player: {
+              connect: { id: matchedPlayer.id },
+            },
+          }),
         },
       });
+
+      console.log("  ✅ [SAVE] Stats saved for:", player.name);
     }
   }
+
+  console.log("✅ [SAVE] All player stats saved successfully");
 
   return match;
 }

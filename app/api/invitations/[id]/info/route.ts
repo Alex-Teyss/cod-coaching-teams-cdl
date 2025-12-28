@@ -18,7 +18,7 @@ export async function GET(
             name: true,
             coach: {
               select: {
-                name: true,
+                username: true,
               },
             },
           },

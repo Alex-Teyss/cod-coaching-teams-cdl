@@ -5,6 +5,9 @@ import { ScoreboardAnalysisResult } from "@/lib/types/scoreboard";
 // Mock Prisma client
 vi.mock("@/lib/prisma", () => ({
   prisma: {
+    team: {
+      findUnique: vi.fn(),
+    },
     match: {
       create: vi.fn(),
     },
@@ -106,10 +109,11 @@ describe("saveMatchFromAnalysis", () => {
       screenshotQuality: "good",
     };
 
+    vi.mocked(prisma.team.findUnique).mockResolvedValueOnce({ name: "Team Alpha" } as any);
     vi.mocked(prisma.match.create).mockResolvedValueOnce(mockMatch as any);
     vi.mocked(prisma.user.findMany).mockResolvedValueOnce([
-      { id: "user-1", name: "Player1" },
-      { id: "user-2", name: "Player2" },
+      { id: "user-1", username: "Player1" },
+      { id: "user-2", username: "Player2" },
     ]);
     vi.mocked(prisma.playerStats.create).mockResolvedValue({} as any);
 
@@ -122,7 +126,7 @@ describe("saveMatchFromAnalysis", () => {
     expect(result).toEqual(mockMatch);
     expect(prisma.match.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
-        teamId: "team-1",
+        team: { connect: { id: "team-1" } },
         opponentTeamName: "Team Bravo",
         game: "Black Ops 6",
         gameMode: "Hardpoint",
@@ -135,6 +139,7 @@ describe("saveMatchFromAnalysis", () => {
   });
 
   it("should determine WIN result when our team wins", async () => {
+    vi.mocked(prisma.team.findUnique).mockResolvedValueOnce({ name: "Team Alpha" } as any);
     vi.mocked(prisma.match.create).mockResolvedValueOnce({ id: "match-1" } as any);
     vi.mocked(prisma.user.findMany).mockResolvedValueOnce([]);
 
@@ -168,6 +173,7 @@ describe("saveMatchFromAnalysis", () => {
       ],
     };
 
+    vi.mocked(prisma.team.findUnique).mockResolvedValueOnce({ name: "Team Alpha" } as any);
     vi.mocked(prisma.match.create).mockResolvedValueOnce({ id: "match-1" } as any);
     vi.mocked(prisma.user.findMany).mockResolvedValueOnce([]);
 
@@ -201,6 +207,7 @@ describe("saveMatchFromAnalysis", () => {
       ],
     };
 
+    vi.mocked(prisma.team.findUnique).mockResolvedValueOnce({ name: "Team Alpha" } as any);
     vi.mocked(prisma.match.create).mockResolvedValueOnce({ id: "match-1" } as any);
     vi.mocked(prisma.user.findMany).mockResolvedValueOnce([]);
 
@@ -218,10 +225,11 @@ describe("saveMatchFromAnalysis", () => {
   });
 
   it("should create player stats for matched players", async () => {
+    vi.mocked(prisma.team.findUnique).mockResolvedValueOnce({ name: "Team Alpha" } as any);
     vi.mocked(prisma.match.create).mockResolvedValueOnce({ id: "match-123" } as any);
     vi.mocked(prisma.user.findMany).mockResolvedValueOnce([
-      { id: "user-1", name: "Player1" },
-      { id: "user-2", name: "Player2" },
+      { id: "user-1", username: "Player1" },
+      { id: "user-2", username: "Player2" },
     ]);
     vi.mocked(prisma.playerStats.create).mockResolvedValue({} as any);
 
@@ -231,11 +239,10 @@ describe("saveMatchFromAnalysis", () => {
       uploadedBy: "coach-1",
     });
 
-    expect(prisma.playerStats.create).toHaveBeenCalledTimes(2);
+    // Should create stats for all 3 players (2 from Team Alpha + 1 from Team Bravo)
+    expect(prisma.playerStats.create).toHaveBeenCalledTimes(3);
     expect(prisma.playerStats.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
-        matchId: "match-123",
-        playerId: "user-1",
         playerName: "Player1",
         kills: 25,
         deaths: 18,
@@ -244,15 +251,17 @@ describe("saveMatchFromAnalysis", () => {
         hillTime: "02:34",
         kdRatio: 1.39,
         confidence: "high",
+        player: { connect: { id: "user-1" } },
       }),
     });
   });
 
   it("should match players case-insensitively", async () => {
+    vi.mocked(prisma.team.findUnique).mockResolvedValueOnce({ name: "Team Alpha" } as any);
     vi.mocked(prisma.match.create).mockResolvedValueOnce({ id: "match-123" } as any);
     vi.mocked(prisma.user.findMany).mockResolvedValueOnce([
-      { id: "user-1", name: "PLAYER1" },
-      { id: "user-2", name: "player2" },
+      { id: "user-1", username: "PLAYER1" },
+      { id: "user-2", username: "player2" },
     ]);
     vi.mocked(prisma.playerStats.create).mockResolvedValue({} as any);
 
@@ -262,13 +271,15 @@ describe("saveMatchFromAnalysis", () => {
       uploadedBy: "coach-1",
     });
 
-    expect(prisma.playerStats.create).toHaveBeenCalledTimes(2);
+    // Should create stats for all 3 players (2 from Team Alpha + 1 from Team Bravo)
+    expect(prisma.playerStats.create).toHaveBeenCalledTimes(3);
   });
 
-  it("should skip player stats creation for unmatched players", async () => {
+  it("should save player stats for all players from all teams", async () => {
+    vi.mocked(prisma.team.findUnique).mockResolvedValueOnce({ name: "Team Alpha" } as any);
     vi.mocked(prisma.match.create).mockResolvedValueOnce({ id: "match-123" } as any);
     vi.mocked(prisma.user.findMany).mockResolvedValueOnce([
-      { id: "user-1", name: "Player1" },
+      { id: "user-1", username: "Player1" },
       // Player2 is not in the team
     ]);
     vi.mocked(prisma.playerStats.create).mockResolvedValue({} as any);
@@ -279,13 +290,8 @@ describe("saveMatchFromAnalysis", () => {
       uploadedBy: "coach-1",
     });
 
-    // Should only create stats for Player1
-    expect(prisma.playerStats.create).toHaveBeenCalledTimes(1);
-    expect(prisma.playerStats.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({
-        playerName: "Player1",
-      }),
-    });
+    // Should create stats for all 3 players (2 from Team Alpha, 1 from Team Bravo)
+    expect(prisma.playerStats.create).toHaveBeenCalledTimes(3);
   });
 
   it("should handle missing opponent team", async () => {
@@ -294,6 +300,7 @@ describe("saveMatchFromAnalysis", () => {
       teams: [mockAnalysisResult.teams[0]],
     };
 
+    vi.mocked(prisma.team.findUnique).mockResolvedValueOnce({ name: "Team Alpha" } as any);
     vi.mocked(prisma.match.create).mockResolvedValueOnce({ id: "match-123" } as any);
     vi.mocked(prisma.user.findMany).mockResolvedValueOnce([]);
 
@@ -311,28 +318,23 @@ describe("saveMatchFromAnalysis", () => {
     });
   });
 
-  it("should throw error if no visible team found", async () => {
-    const noVisibleTeamResult = {
-      ...mockAnalysisResult,
-      teams: [
-        {
-          ...mockAnalysisResult.teams[0],
-          visible: false,
-        },
-        {
-          ...mockAnalysisResult.teams[1],
-          visible: false,
-        },
-      ],
-    };
+  it("should set result to null when team name is not found", async () => {
+    vi.mocked(prisma.team.findUnique).mockResolvedValueOnce({ name: "My Team" } as any);
+    vi.mocked(prisma.match.create).mockResolvedValueOnce({ id: "match-1" } as any);
+    vi.mocked(prisma.user.findMany).mockResolvedValueOnce([]);
 
-    await expect(
-      saveMatchFromAnalysis({
-        teamId: "team-1",
-        analysisResult: noVisibleTeamResult,
-        uploadedBy: "coach-1",
-      })
-    ).rejects.toThrow("Aucune équipe visible dans l'analyse");
+    await saveMatchFromAnalysis({
+      teamId: "team-1",
+      analysisResult: mockAnalysisResult,
+      uploadedBy: "coach-1",
+    });
+
+    expect(prisma.match.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        result: null,
+        teamScore: 0,
+      }),
+    });
   });
 
   it("should save all player stats fields", async () => {
@@ -361,9 +363,10 @@ describe("saveMatchFromAnalysis", () => {
       ],
     };
 
+    vi.mocked(prisma.team.findUnique).mockResolvedValueOnce({ name: "Team Alpha" } as any);
     vi.mocked(prisma.match.create).mockResolvedValueOnce({ id: "match-123" } as any);
     vi.mocked(prisma.user.findMany).mockResolvedValueOnce([
-      { id: "user-1", name: "Player1" },
+      { id: "user-1", username: "Player1" },
     ]);
     vi.mocked(prisma.playerStats.create).mockResolvedValue({} as any);
 
@@ -383,6 +386,7 @@ describe("saveMatchFromAnalysis", () => {
   });
 
   it("should handle metadata with all optional fields", async () => {
+    vi.mocked(prisma.team.findUnique).mockResolvedValueOnce({ name: "Team Alpha" } as any);
     vi.mocked(prisma.match.create).mockResolvedValueOnce({ id: "match-123" } as any);
     vi.mocked(prisma.user.findMany).mockResolvedValueOnce([]);
 
@@ -413,6 +417,7 @@ describe("saveMatchFromAnalysis", () => {
       },
     };
 
+    vi.mocked(prisma.team.findUnique).mockResolvedValueOnce({ name: "Team Alpha" } as any);
     vi.mocked(prisma.match.create).mockResolvedValueOnce({ id: "match-123" } as any);
     vi.mocked(prisma.user.findMany).mockResolvedValueOnce([]);
 

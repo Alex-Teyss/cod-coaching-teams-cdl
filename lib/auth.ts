@@ -16,6 +16,9 @@ export const auth = betterAuth({
     },
   },
   user: {
+    fields: {
+      name: "username", // Map Better Auth's default 'name' field to 'username'
+    },
     additionalFields: {
       role: {
         type: "string",

@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Créer l'équipe
+    // Créer l'équipe et mettre à jour le teamId du coach
     const team = await prisma.team.create({
       data: {
         name: name.trim(),
@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
         coach: {
           select: {
             id: true,
-            name: true,
+            username: true,
             email: true,
           },
         },
@@ -150,6 +150,12 @@ export async function POST(request: NextRequest) {
           },
         },
       },
+    });
+
+    // Mettre à jour le teamId du coach
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: { teamId: team.id },
     });
 
     return NextResponse.json(team, { status: 201 });

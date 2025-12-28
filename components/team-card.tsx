@@ -8,7 +8,7 @@ import Image from "next/image";
 
 interface Player {
   id: string;
-  name: string;
+  username: string;
   email: string;
   image?: string | null;
 }
@@ -220,19 +220,19 @@ export function TeamCard({ team }: TeamCardProps) {
                     <div className="relative h-10 w-10">
                       <Image
                         src={player.image}
-                        alt={player.name}
+                        alt={player.username}
                         fill
                         className="object-cover"
                       />
                     </div>
                   ) : (
                     <span className="text-sm font-semibold text-primary">
-                      {player.name.charAt(0).toUpperCase()}
+                      {player.username.charAt(0).toUpperCase()}
                     </span>
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{player.name}</p>
+                  <p className="font-medium truncate">{player.username}</p>
                   <p className="text-sm text-muted-foreground truncate">
                     {player.email}
                   </p>
@@ -375,7 +375,7 @@ export function TeamCard({ team }: TeamCardProps) {
             </h3>
             <p className="text-sm text-muted-foreground mb-6">
               Êtes-vous sûr de vouloir retirer le joueur &quot;
-              {team.players.find((p) => p.id === removingPlayer)?.name}
+              {team.players.find((p) => p.id === removingPlayer)?.username}
               &quot; de l&apos;équipe ?
             </p>
 

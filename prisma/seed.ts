@@ -38,7 +38,7 @@ async function main() {
   console.log('👤 Creating admin user...')
   const admin = await prisma.user.create({
     data: {
-      name: 'Admin User',
+      username: 'Admin User',
       email: 'admin@codcoaching.com',
       emailVerified: true,
       role: 'ADMIN',
@@ -58,7 +58,7 @@ async function main() {
 
   const coach1 = await prisma.user.create({
     data: {
-      name: 'Jean Dupont',
+      username: 'Jean Dupont',
       email: 'jean.dupont@codcoaching.com',
       emailVerified: true,
       role: 'COACH',
@@ -83,7 +83,7 @@ async function main() {
 
   const coach2 = await prisma.user.create({
     data: {
-      name: 'Marie Martin',
+      username: 'Marie Martin',
       email: 'marie.martin@codcoaching.com',
       emailVerified: true,
       role: 'COACH',
@@ -108,7 +108,7 @@ async function main() {
 
   const coach3 = await prisma.user.create({
     data: {
-      name: 'Pierre Dubois',
+      username: 'Pierre Dubois',
       email: 'pierre.dubois@codcoaching.com',
       emailVerified: true,
       role: 'COACH',
@@ -136,7 +136,7 @@ async function main() {
   const team1Players = await Promise.all([
     prisma.user.create({
       data: {
-        name: 'Alex Storm',
+        username: 'Alex Storm',
         email: 'alex.storm@player.com',
         emailVerified: true,
         role: 'PLAYER',
@@ -153,7 +153,7 @@ async function main() {
     }),
     prisma.user.create({
       data: {
-        name: 'Sarah Blaze',
+        username: 'Sarah Blaze',
         email: 'sarah.blaze@player.com',
         emailVerified: true,
         role: 'PLAYER',
@@ -170,7 +170,7 @@ async function main() {
     }),
     prisma.user.create({
       data: {
-        name: 'Mike Shadow',
+        username: 'Mike Shadow',
         email: 'mike.shadow@player.com',
         emailVerified: true,
         role: 'PLAYER',
@@ -187,7 +187,7 @@ async function main() {
     }),
     prisma.user.create({
       data: {
-        name: 'Emma Viper',
+        username: 'Emma Viper',
         email: 'emma.viper@player.com',
         emailVerified: true,
         role: 'PLAYER',
@@ -209,7 +209,7 @@ async function main() {
   const team2Players = await Promise.all([
     prisma.user.create({
       data: {
-        name: 'Lucas Ghost',
+        username: 'Lucas Ghost',
         email: 'lucas.ghost@player.com',
         emailVerified: true,
         role: 'PLAYER',
@@ -226,7 +226,7 @@ async function main() {
     }),
     prisma.user.create({
       data: {
-        name: 'Nina Hawk',
+        username: 'Nina Hawk',
         email: 'nina.hawk@player.com',
         emailVerified: true,
         role: 'PLAYER',
@@ -243,7 +243,7 @@ async function main() {
     }),
     prisma.user.create({
       data: {
-        name: 'Tom Reaper',
+        username: 'Tom Reaper',
         email: 'tom.reaper@player.com',
         emailVerified: true,
         role: 'PLAYER',
@@ -260,7 +260,7 @@ async function main() {
     }),
     prisma.user.create({
       data: {
-        name: 'Lisa Phantom',
+        username: 'Lisa Phantom',
         email: 'lisa.phantom@player.com',
         emailVerified: true,
         role: 'PLAYER',
@@ -282,7 +282,7 @@ async function main() {
   const team3Players = await Promise.all([
     prisma.user.create({
       data: {
-        name: 'Max Thunder',
+        username: 'Max Thunder',
         email: 'max.thunder@player.com',
         emailVerified: true,
         role: 'PLAYER',
@@ -299,7 +299,7 @@ async function main() {
     }),
     prisma.user.create({
       data: {
-        name: 'Zoe Lightning',
+        username: 'Zoe Lightning',
         email: 'zoe.lightning@player.com',
         emailVerified: true,
         role: 'PLAYER',
@@ -342,7 +342,7 @@ async function main() {
         data: {
           matchId: match1.id,
           playerId: player.id,
-          playerName: player.name,
+          playerName: player.username,
           kills,
           deaths,
           kdRatio: parseFloat((kills / deaths).toFixed(2)),
@@ -374,7 +374,7 @@ async function main() {
         data: {
           matchId: match2.id,
           playerId: player.id,
-          playerName: player.name,
+          playerName: player.username,
           kills,
           deaths,
           kdRatio: parseFloat((kills / deaths).toFixed(2)),
@@ -407,7 +407,7 @@ async function main() {
         data: {
           matchId: match3.id,
           playerId: player.id,
-          playerName: player.name,
+          playerName: player.username,
           kills,
           deaths,
           kdRatio: parseFloat((kills / deaths).toFixed(2)),
@@ -443,7 +443,7 @@ async function main() {
         data: {
           matchId: match4.id,
           playerId: player.id,
-          playerName: player.name,
+          playerName: player.username,
           kills,
           deaths,
           kdRatio: parseFloat((kills / deaths).toFixed(2)),
@@ -475,7 +475,7 @@ async function main() {
         data: {
           matchId: match5.id,
           playerId: player.id,
-          playerName: player.name,
+          playerName: player.username,
           kills,
           deaths,
           kdRatio: parseFloat((kills / deaths).toFixed(2)),

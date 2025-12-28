@@ -20,22 +20,27 @@ vi.mock("next/headers", () => ({
 }));
 
 vi.mock("openai", () => {
-  const mockCreate = vi.fn();
+  const mockCreateFn = vi.fn();
   return {
-    default: class {
+    default: class OpenAI {
       chat = {
         completions: {
-          create: mockCreate,
+          create: mockCreateFn,
         },
       };
+
+      constructor() {
+        this.chat.completions.create = mockCreateFn;
+        return this;
+      }
     },
-    mockCreate,
+    mockCreateFn,
   };
 });
 
 const { auth } = await import("@/lib/auth");
 const { saveMatchFromAnalysis } = await import("@/lib/services/match-service");
-const { mockCreate } = await import("openai");
+const { mockCreateFn: mockCreate } = await import("openai");
 
 // Mock sample analysis result
 const mockAnalysisResult = {

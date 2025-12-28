@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
 import { signupSchema, type SignupFormData } from "@/lib/validations/auth"
+import { Eye, EyeOff } from "lucide-react"
 
 // Helper to extract error message from TanStack Form error object
 const getErrorMessage = (error: any): string => {
@@ -23,6 +24,8 @@ export function SignupForm() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   const form = useForm({
     defaultValues: {
@@ -46,7 +49,6 @@ export function SignupForm() {
           password: value.password,
           name: value.username,
           callbackURL: "/",
-          // @ts-expect-error - role is a custom field in Better Auth
           role: value.role,
         })
 
@@ -295,7 +297,7 @@ export function SignupForm() {
                     <Input
                       id={field.name}
                       name={field.name}
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
                       value={field.state.value}
                       onChange={(e) => field.handleChange(e.target.value)}
@@ -303,21 +305,33 @@ export function SignupForm() {
                       disabled={isLoading}
                       className={
                         hasError
-                          ? "border-red-500 focus-visible:ring-red-500 pr-10"
+                          ? "border-red-500 focus-visible:ring-red-500 pr-20"
                           : isValid
-                            ? "border-green-500 focus-visible:ring-green-500 pr-10"
-                            : ""
+                            ? "border-green-500 focus-visible:ring-green-500 pr-20"
+                            : "pr-10"
                       }
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      disabled={isLoading}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
                     {isValid && (
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600 animate-in fade-in zoom-in-50 duration-200">
+                      <div className="absolute right-11 top-1/2 -translate-y-1/2 text-green-600 animate-in fade-in zoom-in-50 duration-200">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                       </div>
                     )}
                     {hasError && (
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-red-600 animate-in fade-in zoom-in-50 duration-200">
+                      <div className="absolute right-11 top-1/2 -translate-y-1/2 text-red-600 animate-in fade-in zoom-in-50 duration-200">
                         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                         </svg>
@@ -351,7 +365,7 @@ export function SignupForm() {
                     <Input
                       id={field.name}
                       name={field.name}
-                      type="password"
+                      type={showConfirmPassword ? "text" : "password"}
                       placeholder="••••••••"
                       value={field.state.value}
                       onChange={(e) => field.handleChange(e.target.value)}
@@ -359,21 +373,33 @@ export function SignupForm() {
                       disabled={isLoading}
                       className={
                         hasError
-                          ? "border-red-500 focus-visible:ring-red-500 pr-10"
+                          ? "border-red-500 focus-visible:ring-red-500 pr-20"
                           : isValid
-                            ? "border-green-500 focus-visible:ring-green-500 pr-10"
-                            : ""
+                            ? "border-green-500 focus-visible:ring-green-500 pr-20"
+                            : "pr-10"
                       }
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      disabled={isLoading}
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
                     {isValid && (
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600 animate-in fade-in zoom-in-50 duration-200">
+                      <div className="absolute right-11 top-1/2 -translate-y-1/2 text-green-600 animate-in fade-in zoom-in-50 duration-200">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                       </div>
                     )}
                     {hasError && (
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-red-600 animate-in fade-in zoom-in-50 duration-200">
+                      <div className="absolute right-11 top-1/2 -translate-y-1/2 text-red-600 animate-in fade-in zoom-in-50 duration-200">
                         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                         </svg>

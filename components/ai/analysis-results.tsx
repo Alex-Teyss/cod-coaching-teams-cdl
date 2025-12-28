@@ -1,7 +1,7 @@
 "use client";
 
 import { ScoreboardAnalysisResult } from "@/lib/types/scoreboard";
-import { Trophy, Users, MapPin, Gamepad2, Clock, AlertCircle, Info } from "lucide-react";
+import { Trophy, Users, MapPin, Clock, AlertCircle, Info } from "lucide-react";
 
 interface AnalysisResultsProps {
   result: ScoreboardAnalysisResult;
@@ -10,8 +10,8 @@ interface AnalysisResultsProps {
 export function AnalysisResults({ result }: AnalysisResultsProps) {
   return (
     <div className="space-y-6">
-      {/* Metadata Alerts */}
-      {(result.metadata.partial || result.metadata.matchStatus === "in-progress" || result.metadata.notes) && (
+      {/* Metadata Alerts - Only show for actual warnings */}
+      {(result.metadata.partial || result.metadata.matchStatus === "in-progress") && (
         <div className="rounded-lg border border-yellow-500/50 bg-yellow-500/10 p-4">
           <div className="flex items-start gap-3">
             <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-500 mt-0.5" />
@@ -27,11 +27,6 @@ export function AnalysisResults({ result }: AnalysisResultsProps) {
                   {result.metadata.timeRemaining && ` (Temps restant: ${result.metadata.timeRemaining})`}
                 </p>
               )}
-              {result.metadata.notes && (
-                <p className="text-sm text-yellow-700 dark:text-yellow-400">
-                  {result.metadata.notes}
-                </p>
-              )}
             </div>
           </div>
         </div>
@@ -40,17 +35,7 @@ export function AnalysisResults({ result }: AnalysisResultsProps) {
       {/* Match Info */}
       <div className="rounded-lg border bg-card p-6">
         <h3 className="text-lg font-semibold mb-4">Informations du match</h3>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-primary/10 p-3">
-              <Gamepad2 className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Jeu</p>
-              <p className="font-medium">{result.game}</p>
-            </div>
-          </div>
-
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <div className="flex items-center gap-3">
             <div className="rounded-lg bg-primary/10 p-3">
               <Trophy className="h-5 w-5 text-primary" />

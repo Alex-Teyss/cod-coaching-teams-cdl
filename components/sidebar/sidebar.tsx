@@ -30,7 +30,7 @@ export function Sidebar({ items, userName, userRole }: SidebarProps) {
   };
 
   return (
-    <div className="flex h-screen w-64 flex-col border-r bg-card">
+    <div className="sticky top-0 flex h-screen w-64 flex-col border-r bg-card">
       <div className="border-b p-6">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">

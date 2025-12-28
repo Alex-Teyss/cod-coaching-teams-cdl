@@ -59,7 +59,7 @@ export function AnalysisTutorial() {
             <ul className="space-y-1.5 text-sm text-muted-foreground ml-4">
               <li className="flex items-start gap-2">
                 <span className="text-primary mt-1">•</span>
-                <span><strong>Informations du match :</strong> Jeu, mode, carte</span>
+                <span><strong>Informations du match :</strong> Mode, carte</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-primary mt-1">•</span>
@@ -67,7 +67,7 @@ export function AnalysisTutorial() {
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-primary mt-1">•</span>
-                <span><strong>Statistiques des joueurs :</strong> Kills, deaths, assists, damage, temps sur colline, captures, etc.</span>
+                <span><strong>Statistiques de tous les joueurs :</strong> Kills, deaths, assists, damage, temps sur colline, captures, etc.</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-primary mt-1">•</span>
@@ -104,22 +104,13 @@ export function AnalysisTutorial() {
         </div>
       </div>
 
-      {/* Supported Games */}
+      {/* Supported Modes */}
       <div className="mt-6 pt-6 border-t">
-        <h4 className="font-semibold mb-3">Jeux et modes supportés</h4>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="p-3 rounded-lg bg-muted/50">
-            <p className="text-sm font-medium mb-1">Jeux</p>
-            <p className="text-xs text-muted-foreground">
-              Black Ops 7, Black Ops 6, Modern Warfare 3, Modern Warfare 2
-            </p>
-          </div>
-          <div className="p-3 rounded-lg bg-muted/50">
-            <p className="text-sm font-medium mb-1">Modes</p>
-            <p className="text-xs text-muted-foreground">
-              Hardpoint, Search & Destroy, Control, Domination, Team Deathmatch, Kill Confirmed
-            </p>
-          </div>
+        <h4 className="font-semibold mb-3">Modes supportés</h4>
+        <div className="p-3 rounded-lg bg-muted/50">
+          <p className="text-sm text-muted-foreground">
+            Hardpoint, Search & Destroy, Control
+          </p>
         </div>
       </div>
     </div>

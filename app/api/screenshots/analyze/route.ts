@@ -15,8 +15,7 @@ Ton rôle est d'extraire, structurer et enrichir les données provenant d'un scr
 
 OBJECTIF :
 À partir d'un screenshot fourni, tu dois détecter automatiquement :
-- Le jeu (Black Ops 7, Black Ops 6, MW3, MW2 selon l'UI)
-- Le mode de jeu (Hardpoint, Search & Destroy, Control, Domination, Team Deathmatch, Kill Confirmed)
+- Le mode de jeu (Hardpoint, Search & Destroy, Control)
 - La carte
 - Le score final des équipes et l'équipe gagnante
 - La liste complète des joueurs visibles
@@ -35,9 +34,6 @@ Utilise ces indices visuels pour identifier le mode de jeu :
 - Hardpoint : Colonne "Hill Time" (temps sur colline MM:SS), icône de colline, score max 250
 - Search & Destroy : Colonnes "Plants" et "Defuses", icône bombe, score max 6
 - Control : Colonne "Captures", zones A/B/C visibles, score max 3
-- Domination : Colonnes "Captures" et "Defends"
-- Team Deathmatch : Pas de colonnes objectives, score basé sur kills
-- Kill Confirmed : Colonnes "Confirms" et "Denies"
 
 CORRECTIONS OCR COMMUNES :
 Applique ces corrections automatiquement aux valeurs numériques :
@@ -61,7 +57,8 @@ Vérifie la cohérence des données extraites :
 
 GESTION DES CAS PARTICULIERS :
 1. Noms d'équipe illisibles (logos uniquement) :
-   - Utilise "Team A" et "Team B"
+   - Utilise "Équipe 1" et "Équipe 2"
+   - IMPORTANT: Le champ teamName est OBLIGATOIRE et ne doit JAMAIS être vide ou null
    - Note dans metadata.notes : "Team names are logos, not text"
 
 2. Screenshot partiel (une seule équipe visible) :
@@ -82,12 +79,11 @@ FORMAT DE SORTIE :
 Retourne toujours un JSON strictement au format suivant :
 
 {
-  "game": "Black Ops 7 | Black Ops 6 | Modern Warfare 3 | Modern Warfare 2",
-  "mode": "Hardpoint | Search & Destroy | Control | Domination | Team Deathmatch | Kill Confirmed",
+  "mode": "Hardpoint | Search & Destroy | Control",
   "map": "nom de la carte",
   "teams": [
     {
-      "teamName": "Équipe A ou nom détecté",
+      "teamName": "Nom détecté ou Équipe 1",
       "score": 250,
       "winner": true,
       "visible": true,
@@ -108,7 +104,7 @@ Retourne toujours un JSON strictement au format suivant :
       ]
     },
     {
-      "teamName": "Équipe B ou nom détecté",
+      "teamName": "Nom détecté ou Équipe 2",
       "score": 180,
       "winner": false,
       "visible": true,
@@ -150,6 +146,7 @@ INSTRUCTIONS :
 9. En cas de doute, remplis le champ debug avec les zones problématiques et suggestions.
 10. Ne renvoie rien d'autre que le JSON final. Pas d'explications, pas de texte autour.
 11. Si un joueur occupe plusieurs lignes ou est partiellement coupé, regroupe intelligemment les informations.
+12. Ne détecte PAS le jeu (Black Ops, Modern Warfare, etc.), concentre-toi uniquement sur les données du scoreboard.
 
 Ton analyse doit être résiliente, efficace et cohérente.`;
 
@@ -251,10 +248,41 @@ export async function POST(req: NextRequest) {
     }
 
     // Save match to database if user has a team AND wants to save
-    if (saveToDatabase && session.user.teamId) {
+    if (saveToDatabase) {
+      // Get user's team (either as player via teamId or as coach via coachedTeams)
+      let userTeamId = session.user.teamId;
+
+      if (!userTeamId && session.user.role === "COACH") {
+        // For coaches, check if they have any coached teams
+        const { prisma } = await import("@/lib/prisma");
+        const coach = await prisma.user.findUnique({
+          where: { id: session.user.id },
+          include: { coachedTeams: { take: 1 } },
+        });
+
+        if (coach?.coachedTeams.length) {
+          userTeamId = coach.coachedTeams[0].id;
+
+          // Update user's teamId for future requests
+          await prisma.user.update({
+            where: { id: session.user.id },
+            data: { teamId: userTeamId },
+          });
+        }
+      }
+
+      if (!userTeamId) {
+        console.log("Cannot save: user has no team");
+        return NextResponse.json({
+          ...analysisResult,
+          saved: false,
+          saveError: "Vous devez créer une équipe avant de pouvoir sauvegarder des matchs. Rendez-vous sur la page 'Créer une équipe'.",
+        });
+      }
+
       try {
         const match = await saveMatchFromAnalysis({
-          teamId: session.user.teamId,
+          teamId: userTeamId,
           analysisResult,
           uploadedBy: session.user.id,
         });
@@ -271,7 +299,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({
           ...analysisResult,
           saved: false,
-          saveError: "Le match n'a pas pu être sauvegardé en base de données",
+          saveError: saveError instanceof Error ? saveError.message : "Le match n'a pas pu être sauvegardé en base de données",
         });
       }
     }

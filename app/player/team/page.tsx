@@ -23,19 +23,19 @@ export default async function PlayerTeamPage() {
         include: {
           coach: {
             select: {
-              name: true,
+              username: true,
               email: true,
             },
           },
           players: {
             select: {
               id: true,
-              name: true,
+              username: true,
               email: true,
               createdAt: true,
             },
             orderBy: {
-              name: "asc",
+              username: "asc",
             },
           },
         },
@@ -108,11 +108,11 @@ export default async function PlayerTeamPage() {
             <div className="flex items-center gap-3 rounded-lg border p-4 bg-muted/50">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary">
                 <span className="text-lg font-semibold text-primary-foreground">
-                  {team.coach.name.charAt(0).toUpperCase()}
+                  {team.coach.username.charAt(0).toUpperCase()}
                 </span>
               </div>
               <div>
-                <p className="font-medium">{team.coach.name}</p>
+                <p className="font-medium">{team.coach.username}</p>
                 <p className="text-sm text-muted-foreground">
                   {team.coach.email}
                 </p>
@@ -136,12 +136,12 @@ export default async function PlayerTeamPage() {
                 >
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
                     <span className="text-sm font-semibold text-primary">
-                      {player.name.charAt(0).toUpperCase()}
+                      {player.username.charAt(0).toUpperCase()}
                     </span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="font-medium truncate">{player.name}</p>
+                      <p className="font-medium truncate">{player.username}</p>
                       {player.id === session.user.id && (
                         <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
                           Vous

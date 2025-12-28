@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
 
     sendPasswordResetEmail({
       to: email,
-      userName: user.name,
+      userName: user.username,
       resetUrl,
     }).then((result) => {
       if (result.success) {

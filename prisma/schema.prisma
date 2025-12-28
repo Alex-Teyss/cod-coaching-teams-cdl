@@ -164,10 +164,10 @@ model Match {
   id               String   @id @default(cuid())
   teamId           String
   opponentTeamName String?  // Nom de l'équipe adverse
-  game             String   // "Black Ops 7", "Black Ops 6", "MW3", "MW2"
+  game             String?  // "Black Ops 7", "Black Ops 6", "MW3", "MW2" (optionnel)
   gameMode         String   // "Hardpoint", "Search & Destroy", "Control", etc.
   map              String   // "Nuketown", "Raid", "Express", etc.
-  result           String   // "WIN", "LOSS", "DRAW"
+  result           String?  // "WIN", "LOSS", "DRAW" (null si le nom de l'équipe n'est pas détecté)
   teamScore        Int      // Score de notre équipe
   opponentScore    Int      // Score de l'équipe adverse
 
@@ -221,9 +221,10 @@ enum ScreenshotStatus {
 model PlayerStats {
   id           String    @id @default(cuid())
   matchId      String
-  playerId     String
+  playerId     String?
   screenshotId String?
   playerName   String    // Nom du joueur dans le screenshot (peut différer du User.name)
+  teamName     String?   // Nom de l'équipe du joueur (pour différencier notre équipe vs adversaire)
 
   // Stats de base
   kills        Int
@@ -246,10 +247,9 @@ model PlayerStats {
   updatedAt    DateTime  @updatedAt
 
   match        Match       @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  player       User        @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  player       User?       @relation(fields: [playerId], references: [id], onDelete: Cascade)
   screenshot   Screenshot? @relation(fields: [screenshotId], references: [id], onDelete: SetNull)
 
-  @@unique([matchId, playerId])
   @@index([matchId])
   @@index([playerId])
   @@index([screenshotId])

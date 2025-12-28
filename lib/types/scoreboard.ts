@@ -1,6 +1,6 @@
 // Types for COD scoreboard analysis
 
-export type GameMode = "Hardpoint" | "Search & Destroy" | "Control" | "Domination" | "Team Deathmatch" | "Kill Confirmed";
+export type GameMode = "Hardpoint" | "Search & Destroy" | "Control";
 export type GameVersion = "Modern Warfare 3" | "Modern Warfare 2" | "Black Ops 6" | "Black Ops 7";
 export type ConfidenceLevel = "high" | "medium" | "low";
 export type ScreenshotQuality = "good" | "medium" | "poor";
@@ -55,7 +55,7 @@ export interface ScoreboardMetadata {
 }
 
 export interface ScoreboardAnalysisResult {
-  game: GameVersion;
+  game?: GameVersion;
   mode: GameMode;
   map: string;
   teams: TeamScoreboardData[];

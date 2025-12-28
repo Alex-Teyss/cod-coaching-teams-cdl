@@ -67,33 +67,53 @@ export function ScreenshotAnalyzer() {
   };
 
   const handleSaveMatch = async () => {
-    if (!result || result.saved) return;
+    console.log("🔍 [SAVE] Starting save process...");
+    console.log("🔍 [SAVE] result:", result);
+    console.log("🔍 [SAVE] result.saved:", result?.saved);
+    console.log("🔍 [SAVE] file:", file);
 
+    if (!result || result.saved || !file) {
+      console.error("❌ [SAVE] Cannot save - Missing requirements");
+      if (!file) {
+        setError("Le fichier n'est plus disponible. Veuillez réanalyser le screenshot.");
+      }
+      return;
+    }
+
+    console.log("✅ [SAVE] All checks passed, starting save...");
     setSaving(true);
     setError(null);
 
     try {
+      console.log("📤 [SAVE] Creating FormData...");
       const formData = new FormData();
-      if (file) {
-        formData.append("image", file);
-      }
+      formData.append("image", file);
       formData.append("saveToDatabase", "true");
+      console.log("📤 [SAVE] FormData created, file size:", file.size);
 
+      console.log("📤 [SAVE] Sending request to /api/screenshots/analyze...");
       const response = await fetch("/api/screenshots/analyze", {
         method: "POST",
         body: formData,
       });
 
+      console.log("📥 [SAVE] Response received, status:", response.status);
+
       if (!response.ok) {
+        console.error("❌ [SAVE] Response not OK");
         const errorData = await response.json();
+        console.error("❌ [SAVE] Error data:", errorData);
         throw new Error(errorData.error || "Erreur lors de la sauvegarde");
       }
 
       const data = await response.json();
+      console.log("✅ [SAVE] Save successful! Data:", data);
       setResult(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Une erreur est survenue");
+      console.error("❌ [SAVE] Exception caught:", err);
+      setError(err instanceof Error ? err.message : "Une erreur est survenue lors de la sauvegarde");
     } finally {
+      console.log("🏁 [SAVE] Save process finished");
       setSaving(false);
     }
   };

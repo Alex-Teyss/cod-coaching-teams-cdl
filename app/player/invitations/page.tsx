@@ -12,7 +12,7 @@ interface Invitation {
   team: {
     name: string;
     coach: {
-      name: string;
+      username: string;
     };
   };
 }
@@ -130,7 +130,7 @@ export default function PlayerInvitationsPage() {
                       <div className="space-y-1 text-sm text-muted-foreground">
                         <p>
                           <span className="font-medium">Coach:</span>{" "}
-                          {invitation.team.coach.name}
+                          {invitation.team.coach.username}
                         </p>
                         <p>
                           <span className="font-medium">Invité le:</span>{" "}

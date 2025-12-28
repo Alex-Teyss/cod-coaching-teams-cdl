@@ -45,7 +45,7 @@ export default function InvitePage() {
 
   const form = useForm<PlayerOnboardingFormData>({
     defaultValues: {
-      name: "",
+      username: "",
       password: "",
       confirmPassword: "",
     },
@@ -66,7 +66,7 @@ export default function InvitePage() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            name: value.name,
+            username: value.username,
             password: value.password,
             email: invitation.email,
           }),
@@ -293,15 +293,15 @@ export default function InvitePage() {
                     </p>
                   </div>
 
-                  <form.Field name="name">
+                  <form.Field name="username">
                     {(field) => (
                       <div className="space-y-2">
-                        <Label htmlFor="name" className={field.state.meta.errors.length > 0 && field.state.meta.isTouched ? "text-red-600" : ""}>
-                          Nom
+                        <Label htmlFor="username" className={field.state.meta.errors.length > 0 && field.state.meta.isTouched ? "text-red-600" : ""}>
+                          Nom d'utilisateur
                         </Label>
                         <div className="relative">
                           <Input
-                            id="name"
+                            id="username"
                             type="text"
                             placeholder="Jean Dupont"
                             value={field.state.value}

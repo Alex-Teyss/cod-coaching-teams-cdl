@@ -121,11 +121,11 @@ export default async function AdminUsersPage() {
                       <div className="flex items-center gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
                           <span className="text-sm font-semibold text-primary">
-                            {user.name.charAt(0).toUpperCase()}
+                            {user.username.charAt(0).toUpperCase()}
                           </span>
                         </div>
                         <div>
-                          <p className="font-medium">{user.name}</p>
+                          <p className="font-medium">{user.username}</p>
                           {user.emailVerified && (
                             <p className="text-xs text-green-600">
                               ✓ Email vérifié

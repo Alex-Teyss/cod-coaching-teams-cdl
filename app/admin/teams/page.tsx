@@ -5,14 +5,14 @@ export default async function AdminTeamsPage() {
     include: {
       coach: {
         select: {
-          name: true,
+          username: true,
           email: true,
         },
       },
       players: {
         select: {
           id: true,
-          name: true,
+          username: true,
           email: true,
         },
       },
@@ -104,7 +104,7 @@ export default async function AdminTeamsPage() {
                       <div className="space-y-1">
                         <p className="text-sm text-muted-foreground">
                           <span className="font-medium">Coach:</span>{" "}
-                          {team.coach.name} ({team.coach.email})
+                          {team.coach.username} ({team.coach.email})
                         </p>
                         <p className="text-sm text-muted-foreground">
                           <span className="font-medium">Joueurs:</span>{" "}
@@ -134,12 +134,12 @@ export default async function AdminTeamsPage() {
                           >
                             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
                               <span className="text-xs font-semibold text-primary">
-                                {player.name.charAt(0).toUpperCase()}
+                                {player.username.charAt(0).toUpperCase()}
                               </span>
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium truncate">
-                                {player.name}
+                                {player.username}
                               </p>
                               <p className="text-xs text-muted-foreground truncate">
                                 {player.email}
