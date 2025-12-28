@@ -13,11 +13,11 @@ export async function POST(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { name, password, email } = body;
+    const { username, password, email } = body;
 
-    if (!name || !password || !email) {
+    if (!username || !password || !email) {
       return NextResponse.json(
-        { error: "Le nom, l'email et le mot de passe sont requis" },
+        { error: "Le nom d'utilisateur, l'email et le mot de passe sont requis" },
         { status: 400 }
       );
     }
@@ -99,7 +99,7 @@ export async function POST(
     const user = await prisma.user.create({
       data: {
         email,
-        name,
+        username,
         role: "PLAYER",
         teamId: invitation.teamId,
         onboardingCompleted: true, // L'onboarding est complété car ils ont créé leur compte
@@ -133,7 +133,7 @@ export async function POST(
       teamId: updatedInvitation.teamId,
       teamName: updatedInvitation.team.name,
       playerId: user.id,
-      playerName: user.name,
+      playerName: user.username,
     };
 
     await prisma.notification.create({
@@ -141,7 +141,7 @@ export async function POST(
         userId: updatedInvitation.team.coachId,
         type: "INVITATION_ACCEPTED",
         title: "Invitation acceptée",
-        message: `${name} a accepté l'invitation et a rejoint l'équipe ${updatedInvitation.team.name}`,
+        message: `${username} a accepté l'invitation et a rejoint l'équipe ${updatedInvitation.team.name}`,
         metadata: {
           ...acceptedNotificationMetadata,
           link: getNotificationLink({ type: "INVITATION_ACCEPTED", metadata: acceptedNotificationMetadata }),
@@ -189,7 +189,7 @@ export async function POST(
       user: {
         id: user.id,
         email: user.email,
-        name: user.name,
+        username: user.username,
       },
       teamValidated: teamPlayersCount === MAX_TEAM_SIZE,
     });

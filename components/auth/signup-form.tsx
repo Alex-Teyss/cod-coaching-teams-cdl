@@ -26,7 +26,7 @@ export function SignupForm() {
 
   const form = useForm({
     defaultValues: {
-      name: "",
+      username: "",
       email: "",
       password: "",
       confirmPassword: "",
@@ -44,7 +44,7 @@ export function SignupForm() {
         const result = await signUp.email({
           email: value.email,
           password: value.password,
-          name: value.name,
+          name: value.username,
           callbackURL: "/",
           // @ts-expect-error - role is a custom field in Better Auth
           role: value.role,
@@ -169,7 +169,7 @@ export function SignupForm() {
             )}
           </form.Field>
 
-          <form.Field name="name">
+          <form.Field name="username">
             {(field) => {
               const hasError = field.state.meta.isTouched && field.state.meta.errors.length > 0
               const isValid = field.state.meta.isTouched && field.state.meta.errors.length === 0 && field.state.value
@@ -177,14 +177,14 @@ export function SignupForm() {
               return (
                 <div className="space-y-2">
                   <Label htmlFor={field.name} className={hasError ? "text-red-600" : ""}>
-                    Nom
+                    Nom d&apos;utilisateur
                   </Label>
                   <div className="relative">
                     <Input
                       id={field.name}
                       name={field.name}
                       type="text"
-                      placeholder="Jean Dupont"
+                      placeholder="jeandupont"
                       value={field.state.value}
                       onChange={(e) => field.handleChange(e.target.value)}
                       onBlur={field.handleBlur}

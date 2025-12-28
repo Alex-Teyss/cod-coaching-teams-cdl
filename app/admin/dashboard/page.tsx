@@ -15,7 +15,7 @@ export default async function AdminDashboard() {
     orderBy: { createdAt: "desc" },
     select: {
       id: true,
-      name: true,
+      username: true,
       email: true,
       role: true,
       createdAt: true,
@@ -26,7 +26,7 @@ export default async function AdminDashboard() {
     include: {
       coach: {
         select: {
-          name: true,
+          username: true,
         },
       },
       _count: {

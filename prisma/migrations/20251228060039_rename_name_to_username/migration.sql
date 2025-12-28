@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "user" RENAME COLUMN "name" TO "username";

@@ -24,7 +24,7 @@ export default function PlayerOnboardingPage() {
 
   const form = useForm({
     defaultValues: {
-      name: "",
+      username: "",
       password: "",
       confirmPassword: "",
     } as PlayerOnboardingFormData,
@@ -43,7 +43,7 @@ export default function PlayerOnboardingPage() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            name: value.name,
+            username: value.username,
             password: value.password,
           }),
         })
@@ -107,7 +107,7 @@ export default function PlayerOnboardingPage() {
           }}
         >
           <CardContent className="space-y-4">
-            <form.Field name="name">
+            <form.Field name="username">
               {(field) => {
                 const hasError = field.state.meta.isTouched && field.state.meta.errors.length > 0
                 const isValid = field.state.meta.isTouched && field.state.meta.errors.length === 0 && field.state.value
@@ -115,14 +115,14 @@ export default function PlayerOnboardingPage() {
                 return (
                   <div className="space-y-2">
                     <Label htmlFor={field.name} className={hasError ? "text-red-600" : ""}>
-                      Nom d'affichage
+                      Nom d&apos;utilisateur
                     </Label>
                     <div className="relative">
                       <Input
                         id={field.name}
                         name={field.name}
                         type="text"
-                        placeholder="Jean Dupont"
+                        placeholder="jeandupont"
                         value={field.state.value}
                         onChange={(e) => field.handleChange(e.target.value)}
                         onBlur={field.handleBlur}

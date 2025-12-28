@@ -15,11 +15,11 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { name, password } = body
+    const { username, password } = body
 
-    if (!name || !password) {
+    if (!username || !password) {
       return NextResponse.json(
-        { error: "Le nom et le mot de passe sont requis" },
+        { error: "Le nom d'utilisateur et le mot de passe sont requis" },
         { status: 400 }
       )
     }
@@ -28,13 +28,13 @@ export async function POST(request: Request) {
     // Cela garantit la compatibilité avec le système d'authentification de Better Auth
     const hashedPassword = await hashPassword(password)
 
-    // Update user with new name and mark onboarding as completed
+    // Update user with new username and mark onboarding as completed
     const updatedUser = await prisma.user.update({
       where: {
         id: session.user.id,
       },
       data: {
-        name: name,
+        username: username,
         onboardingCompleted: true,
       },
     })
@@ -78,7 +78,7 @@ export async function POST(request: Request) {
       success: true,
       user: {
         id: updatedUser.id,
-        name: updatedUser.name,
+        username: updatedUser.username,
         email: updatedUser.email,
       },
     })

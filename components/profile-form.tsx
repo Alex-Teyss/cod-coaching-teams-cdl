@@ -11,7 +11,7 @@ import { Loader2 } from "lucide-react"
 interface ProfileFormProps {
   user: {
     id: string
-    name: string
+    username: string
     email: string
     image?: string | null
   }
@@ -20,7 +20,7 @@ interface ProfileFormProps {
 export function ProfileForm({ user }: ProfileFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
-  const [name, setName] = useState(user.name)
+  const [username, setUsername] = useState(user.username)
   const [image, setImage] = useState(user.image || "")
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -34,7 +34,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          name,
+          username,
           image,
         }),
       })
@@ -63,12 +63,12 @@ export function ProfileForm({ user }: ProfileFormProps) {
       />
 
       <div className="space-y-2">
-        <Label htmlFor="name">Nom</Label>
+        <Label htmlFor="username">Nom d&apos;utilisateur</Label>
         <Input
-          id="name"
+          id="username"
           type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
           disabled={isLoading}
           required
         />

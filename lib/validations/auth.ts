@@ -13,11 +13,11 @@ export const loginSchema = z.object({
 
 export const signupSchema = z
   .object({
-    name: z
+    username: z
       .string()
-      .min(1, "Le nom est requis")
-      .min(2, "Le nom doit contenir au moins 2 caractères")
-      .max(50, "Le nom ne peut pas dépasser 50 caractères"),
+      .min(1, "Le nom d'utilisateur est requis")
+      .min(2, "Le nom d'utilisateur doit contenir au moins 2 caractères")
+      .max(50, "Le nom d'utilisateur ne peut pas dépasser 50 caractères"),
     email: z
       .string()
       .min(1, "L'email est requis")
@@ -42,11 +42,11 @@ export const signupSchema = z
 
 export const playerOnboardingSchema = z
   .object({
-    name: z
+    username: z
       .string()
-      .min(1, "Le nom est requis")
-      .min(2, "Le nom doit contenir au moins 2 caractères")
-      .max(50, "Le nom ne peut pas dépasser 50 caractères"),
+      .min(1, "Le nom d'utilisateur est requis")
+      .min(2, "Le nom d'utilisateur doit contenir au moins 2 caractères")
+      .max(50, "Le nom d'utilisateur ne peut pas dépasser 50 caractères"),
     password: z
       .string()
       .min(1, "Le mot de passe est requis")

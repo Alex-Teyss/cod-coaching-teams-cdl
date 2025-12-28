@@ -55,7 +55,7 @@ pnpm prisma migrate reset
 - **Database**: PostgreSQL with Prisma ORM + Prisma Accelerate (connection pooling & caching)
 - **Authentication**: Better Auth with email/password and Google OAuth
 - **Email**: Resend (configured for test mode in development)
-- **AI**: Google Gemini 1.5 Flash (FREE - screenshot analysis)
+- **AI**: OpenAI GPT-4o (screenshot analysis with vision)
 - **UI Components**: shadcn/ui (New York style, neutral base color)
 - **Styling**: Tailwind CSS v4 with CSS variables
 - **Icons**: Lucide React
@@ -151,7 +151,7 @@ See `RESEND_EMAIL_SETUP.md` for detailed email configuration guide.
 
 ### AI Screenshot Analysis System
 
-The application includes an AI-powered screenshot analysis system using Google Gemini 1.5 Flash (FREE):
+The application includes an AI-powered screenshot analysis system using OpenAI GPT-4o:
 
 **Features**:
 - Automatic extraction of scoreboard data from COD screenshots
@@ -168,13 +168,13 @@ The application includes an AI-powered screenshot analysis system using Google G
 - **Types**: `lib/types/scoreboard.ts` - TypeScript definitions for scoreboard data
 
 **Configuration**:
-- Requires `GEMINI_API_KEY` environment variable
-- Get free API key at: https://aistudio.google.com/app/apikey
-- See `GEMINI_SETUP.md` for detailed setup instructions
+- Requires `OPENAI_API_KEY` environment variable
+- Get API key at: https://platform.openai.com/api-keys
+- Requires OpenAI account with credits or active subscription
 
 **Workflow**:
 1. Coach uploads screenshot via UI
-2. Image is sent to Gemini API with structured prompt
+2. Image is sent to OpenAI GPT-4o with structured prompt
 3. AI extracts: game, mode, map, teams, players, stats
 4. Results displayed in formatted tables with confidence levels
 
@@ -207,8 +207,8 @@ RESEND_API_KEY="re_xxxxxxxxxx"
 EMAIL_FROM="COD Coaching <noreply@yourdomain.com>"
 SUPPORT_EMAIL="contact@codcoachingteams.com"
 
-# AI (Google Gemini - FREE)
-GEMINI_API_KEY="AIzaSy..."
+# AI (OpenAI GPT-4o)
+OPENAI_API_KEY="sk-proj-..."
 ```
 
 ## Adding shadcn/ui Components

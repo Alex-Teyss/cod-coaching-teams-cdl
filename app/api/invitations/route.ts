@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
               name: true,
               coach: {
                 select: {
-                  name: true,
+                  username: true,
                 },
               },
             },
@@ -213,7 +213,7 @@ export async function POST(request: NextRequest) {
     sendInvitationEmail({
       to: email,
       teamName: invitation.team.name,
-      coachName: invitation.team.coach.name,
+      coachName: invitation.team.coach.username,
       invitationUrl,
     }).then((emailResult) => {
       if (emailResult.success) {
@@ -238,7 +238,7 @@ export async function POST(request: NextRequest) {
           userId: invitedUser.id,
           type: "INVITATION_RECEIVED",
           title: "Nouvelle invitation",
-          message: `Vous avez été invité à rejoindre l'équipe ${invitation.team.name} par ${invitation.team.coach.name}`,
+          message: `Vous avez été invité à rejoindre l'équipe ${invitation.team.name} par ${invitation.team.coach.username}`,
           metadata: {
             ...notificationMetadata,
             link: getNotificationLink({ type: "INVITATION_RECEIVED", metadata: notificationMetadata }),

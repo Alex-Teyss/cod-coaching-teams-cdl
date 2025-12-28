@@ -1,12 +1,14 @@
-import { GoogleGenAI } from "@google/genai";
+import OpenAI from "openai";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { saveMatchFromAnalysis } from "@/lib/services/match-service";
 import { TeamScoreboardData, PlayerScoreboardData } from "@/lib/types/scoreboard";
 
-// The client gets the API key from the environment variable `GEMINI_API_KEY`.
-const ai = new GoogleGenAI({});
+// Initialize OpenAI client
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 const ANALYSIS_PROMPT = `Tu es un agent spécialisé dans l'analyse d'images de scoreboards Call of Duty League.
 Ton rôle est d'extraire, structurer et enrichir les données provenant d'un screenshot de fin de partie CDL, même si l'image n'est pas parfaitement nette ou si certaines informations sont partiellement visibles.
@@ -187,26 +189,31 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(bytes);
     const base64Image = buffer.toString("base64");
 
-    // Analyze image with Gemini 2.5 Flash
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: [
+    // Analyze image with OpenAI GPT-4o
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
         {
           role: "user",
-          parts: [
-            { text: ANALYSIS_PROMPT },
+          content: [
             {
-              inlineData: {
-                mimeType: image.type,
-                data: base64Image,
+              type: "text",
+              text: ANALYSIS_PROMPT,
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: `data:${image.type};base64,${base64Image}`,
               },
             },
           ],
         },
       ],
+      max_tokens: 4096,
+      response_format: { type: "json_object" },
     });
 
-    const text = response.text;
+    const text = response.choices[0].message.content;
 
     if (!text) {
       return NextResponse.json(
