@@ -32,8 +32,8 @@ export async function saveMatchFromAnalysis({
   // Trouver l'équipe adverse
   const opponentTeam = teams.find((t) => t !== ourTeam);
 
-  // Déterminer le résultat du match SEULEMENT si notre équipe est trouvée
-  let result: string | null = null;
+  // Déterminer le résultat du match
+  let result: string;
   let ourScore = 0;
   let opponentScore = opponentTeam?.score || 0;
 
@@ -52,8 +52,36 @@ export async function saveMatchFromAnalysis({
     } else {
       result = "DRAW";
     }
+  } else {
+    // Si notre équipe n'est pas trouvée dans le screenshot,
+    // cela signifie que le coach analyse un match qui ne concerne pas son équipe
+    // On enregistre simplement les scores sans déterminer WIN/LOSS pour notre équipe
+    const firstTeam = teams[0];
+    const secondTeam = teams[1];
+
+    if (firstTeam && secondTeam) {
+      // On prend la première équipe comme référence
+      ourScore = firstTeam.score;
+      opponentScore = secondTeam.score;
+
+      // On détermine le résultat du point de vue de la première équipe du screenshot
+      if (firstTeam.winner === true || ourScore > opponentScore) {
+        result = "WIN";
+      } else if (firstTeam.winner === false || ourScore < opponentScore) {
+        result = "LOSS";
+      } else {
+        result = "DRAW";
+      }
+    } else if (firstTeam) {
+      // Une seule équipe visible - on prend ses infos
+      ourScore = firstTeam.score;
+      opponentScore = 0;
+      result = firstTeam.winner === true ? "WIN" : "LOSS";
+    } else {
+      // Cas fallback - aucune équipe détectée
+      result = "DRAW";
+    }
   }
-  // Si ourTeam n'est pas trouvé, result reste null
 
   // Créer le match avec ses stats
   const match = await prisma.match.create({
@@ -62,7 +90,7 @@ export async function saveMatchFromAnalysis({
       game: game || null,
       gameMode: mode,
       map,
-      result: result ?? undefined,
+      result,
       teamScore: ourScore,
       opponentScore,
       season: metadata.season,
@@ -117,6 +145,8 @@ export async function saveMatchFromAnalysis({
           kdRatio: player.ratio || 0,
           damage: player.damage || null,
           hillTime: player.hillTime || null,
+          objectiveKills: player.objectiveKills || null,
+          contestedHillTime: player.contestedHillTime || null,
           captures: player.captures || null,
           defuses: player.defuses || null,
           plants: player.plants || null,

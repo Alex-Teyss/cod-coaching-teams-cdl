@@ -13,11 +13,13 @@ export interface PlayerScoreboardData {
   deaths: number;
   assists: number;
   damage?: number;
-  hillTime?: string;
-  captures?: number;
-  defuses?: number;
-  plants?: number;
-  zoneTime?: string;
+  hillTime?: string;          // Hardpoint: temps sur la colline (MM:SS)
+  objectiveKills?: number;    // Hardpoint: kills sur l'objectif
+  contestedHillTime?: string; // Hardpoint: temps contesté (MM:SS)
+  captures?: number;          // Control
+  defuses?: number;           // Search & Destroy
+  plants?: number;            // Search & Destroy
+  zoneTime?: string;          // Control: temps de zone (MM:SS)
   ratio: number;
   confidence: ConfidenceLevel;
 }

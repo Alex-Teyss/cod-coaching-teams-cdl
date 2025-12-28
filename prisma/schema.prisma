@@ -234,11 +234,13 @@ model PlayerStats {
 
   // Stats optionnelles selon le mode
   damage       Int?
-  hillTime     String?   // Format MM:SS
-  captures     Int?
-  defuses      Int?
-  plants       Int?
-  zoneTime     String?   // Format MM:SS
+  hillTime     String?   // Format MM:SS (Hardpoint)
+  objectiveKills Int?    // Hardpoint
+  contestedHillTime String? // Format MM:SS (Hardpoint)
+  captures     Int?      // Control
+  defuses      Int?      // Search & Destroy
+  plants       Int?      // Search & Destroy
+  zoneTime     String?   // Format MM:SS (Control)
 
   // Confiance de l'extraction AI
   confidence   String    @default("medium") // "high", "medium", "low"

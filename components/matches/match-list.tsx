@@ -31,6 +31,8 @@ interface PlayerStat {
   kdRatio: number;
   damage: number | null;
   hillTime: string | null;
+  objectiveKills: number | null;
+  contestedHillTime: string | null;
   captures: number | null;
   defuses: number | null;
   plants: number | null;
@@ -293,6 +295,12 @@ export function MatchList({ matches }: MatchListProps) {
                                   {match.playerStats.some((s) => s.hillTime) && (
                                     <th className="text-center pb-3 font-medium">Hill Time</th>
                                   )}
+                                  {match.playerStats.some((s) => s.objectiveKills) && (
+                                    <th className="text-center pb-3 font-medium">Obj Kills</th>
+                                  )}
+                                  {match.playerStats.some((s) => s.contestedHillTime) && (
+                                    <th className="text-center pb-3 font-medium">Contested</th>
+                                  )}
                                   {match.playerStats.some((s) => s.captures) && (
                                     <th className="text-center pb-3 font-medium">Caps</th>
                                   )}
@@ -325,6 +333,16 @@ export function MatchList({ matches }: MatchListProps) {
                                     {match.playerStats.some((s) => s.hillTime) && (
                                       <td className="text-center py-3">
                                         {stat.hillTime || "-"}
+                                      </td>
+                                    )}
+                                    {match.playerStats.some((s) => s.objectiveKills) && (
+                                      <td className="text-center py-3">
+                                        {stat.objectiveKills ?? "-"}
+                                      </td>
+                                    )}
+                                    {match.playerStats.some((s) => s.contestedHillTime) && (
+                                      <td className="text-center py-3">
+                                        {stat.contestedHillTime || "-"}
                                       </td>
                                     )}
                                     {match.playerStats.some((s) => s.captures) && (
