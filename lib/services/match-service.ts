@@ -62,7 +62,7 @@ export async function saveMatchFromAnalysis({
       game: game || null,
       gameMode: mode,
       map,
-      result,
+      ...(result !== null && { result }),
       teamScore: ourScore,
       opponentScore,
       season: metadata.season,
